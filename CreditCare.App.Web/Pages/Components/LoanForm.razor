@@ -1,0 +1,64 @@
+﻿@using CreditCare.Domain
+@inject IDialogReference DialogReference
+
+@code {
+    [Parameter] public Loan Loan { get; set; }
+    [Parameter] public List<Customer> Customers { get; set; } = new();
+    [Parameter] public List<InterestRate> InterestRates { get; set; } = new();
+    [Parameter] public List<LoanStatus> LoanStatuses { get; set; } = new();
+
+    private void Submit()
+    {
+        DialogReference.Close(DialogResult.Ok(Loan));
+    }
+
+    private void Cancel()
+    {
+        DialogReference.Close(DialogResult.Cancel());
+    }
+}
+
+<MudDialog>
+    <MudDialogTitle>Add or Edit Loan</MudDialogTitle>
+    <MudDialogContent>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="6">
+                <MudSelect T="int" @bind-Value="Loan.CustomerId" Label="Select Customer" Dense="true" Searchable="true">
+                    @foreach (var customer in Customers)
+                    {
+                        <MudSelectItem Value="@customer.CustomerId">@customer.FullName</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="Loan.PrincipalAmount" Label="Principal Amount" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudDatePicker @bind-Value="Loan.StartDate" Label="Start Date" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudDatePicker @bind-Value="Loan.DueDate" Label="Due Date" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect T="int" @bind-Value="Loan.InterestRateId" Label="Interest Rate" Dense="true" Searchable="true">
+                    @foreach (var rate in InterestRates)
+                    {
+                        <MudSelectItem Value="@rate.InterestRateId">@rate.Rate</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect T="int" @bind-Value="Loan.LoanStatusId" Label="Loan Status" Dense="true" Searchable="true">
+                    @foreach (var status in LoanStatuses)
+                    {
+                        <MudSelectItem Value="@status.LoanStatusId">@status.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudDialogContent>
+    <MudDialogActions>
+        <MudButton OnClick="Submit" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Text">Cancel</MudButton>
+    </MudDialogActions>
+</MudDialog>

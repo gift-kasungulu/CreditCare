@@ -1,0 +1,47 @@
+﻿@page "/customereditform"
+@using CreditCare.Domain
+@using CreditCare.Services
+@inject CustomerService CustomerService
+@inject IDialogService DialogService
+
+@code {
+    [Parameter] public Customer Customer { get; set; }
+    [Parameter] public EventCallback OnCustomerUpdated { get; set; }
+
+    private MudDialogInstance dialogInstance;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private async Task SubmitForm()
+    {
+        await CustomerService.UpdateCustomerAsync(Customer);
+        await OnCustomerUpdated.InvokeAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="Customer.FullName" Label="Full Name" Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="Customer.Email" Label="Email" Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="Customer.NrcNumber" Label="NRC Number" Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="Customer.PhoneNumber" Label="Phone Number" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="Customer.Address" Label="Address" Required="true" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" OnClick="SubmitForm" Color="Color.Primary">Save</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="@(e => MudDialog.Close(DialogResult.Cancel()))">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>

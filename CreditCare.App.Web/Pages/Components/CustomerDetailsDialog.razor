@@ -1,0 +1,47 @@
+﻿@page "/customerdetailsdialog"
+@using CreditCare.Domain
+@using MudBlazor
+@inject IDialogService DialogService
+
+@code {
+    [Parameter] public Customer Customer { get; set; }
+    private MudDialogInstance dialogInstance;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private void CloseDialog()
+    {
+        MudDialog.Close();
+    }
+}
+
+<MudDialog>
+    <DialogContent>
+        
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Full Name</MudText>
+                        <MudText Typo="Typo.body1">@Customer.FullName</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Email</MudText>
+                        <MudText Typo="Typo.body1">@Customer.Email</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">NRC Number</MudText>
+                        <MudText Typo="Typo.body1">@Customer.NrcNumber</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Phone Number</MudText>
+                        <MudText Typo="Typo.body1">@Customer.PhoneNumber</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Address</MudText>
+                        <MudText Typo="Typo.body1">@Customer.Address</MudText>
+                    </MudItem>
+                </MudGrid>
+          
+                <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="CloseDialog">Close</MudButton>
+           
+    </DialogContent>
+</MudDialog>

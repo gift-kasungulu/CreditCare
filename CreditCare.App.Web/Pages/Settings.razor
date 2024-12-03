@@ -1,0 +1,200 @@
+﻿@page "/settings"
+<PageTitle>Settings</PageTitle>
+
+@using CreditCare.App.Web.Pages.Components
+@using CreditCare.Domain
+@inject LoanStatusService LoanStatusService
+@inject InterestRateService InterestRateService
+@inject IDialogService DialogService
+
+<MudContainer>
+    <MudPaper Elevation="3" Class="pa-6 mb-6">
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h4" Class="mb-4">System Settings</MudText>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="mb-4" />
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="1" Class="pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Loan Status Management</MudText>
+
+                    <MudStack Row="true" Class="mb-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenAddLoanStatus">
+                            Add New Status
+                        </MudButton>
+                    </MudStack>
+
+                    <MudTable Items="filterstatus" Hover="true" Dense="true">
+                        <HeaderContent>
+                            <MudTh>ID</MudTh>
+                            <MudTh>Status Name</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.LoanStatusId</MudTd>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="() => DeleteLoanStatus(context)" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="1" Class="pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Interest Rate Management</MudText>
+
+                    <EditForm Model="@newInterestRate" OnValidSubmit="AddInterestRate">
+                        <MudStack>
+                            <MudTextField @bind-Value="newInterestRate.Rate"
+                                          Label="Rate (%)"
+                                          Variant="Variant.Outlined"
+                                          Required="true"
+                                          Type="number" />
+
+                            <MudTextField @bind-Value="newInterestRate.Description"
+                                          Label="Description"
+                                          Variant="Variant.Outlined"
+                                          Required="true" />
+
+                            <MudTextField @bind-Value="newInterestRate.Term"
+                                          Label="Term"
+                                          Variant="Variant.Outlined"
+                                          Required="true" />
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       ButtonType="ButtonType.Submit"
+                                       Disabled="!IsFormValid">
+                                Save Interest Rate
+                            </MudButton>
+                        </MudStack>
+                    </EditForm>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudTable Items="interestRates" Hover="true" Dense="true">
+                        <HeaderContent>
+                            <MudTh>Rate (%)</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Term</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Rate</MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@context.Term</MudTd>
+                            <MudTd>
+                                <MudStack Row="true" Spacing="1">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   OnClick="() => EditInterestRate(context)" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                   Color="Color.Error"
+                                                   Size="Size.Small"
+                                                   OnClick="() => DeleteInterestRate(context.InterestRateId)" />
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<LoanStatus> loanStatuses = new List<LoanStatus>();
+    private List<LoanStatus> filterstatus = new List<LoanStatus>();
+    private string searchQuery = string.Empty;
+
+    private InterestRate newInterestRate = new InterestRate();
+    private List<InterestRate> interestRates = new List<InterestRate>();
+
+    private bool IsFormValid => newInterestRate.Rate > 0 &&
+                                 !string.IsNullOrWhiteSpace(newInterestRate.Description) &&
+                                 !string.IsNullOrWhiteSpace(newInterestRate.Term);
+
+    protected override async Task OnInitializedAsync()
+    {
+        loanStatuses = await LoanStatusService.GetAllAsync();
+        interestRates = await InterestRateService.GetAllAsync();
+        filterstatus = loanStatuses;
+    }
+
+    private async Task OpenAddLoanStatus()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters();
+        var dialog = DialogService.Show<LoanStatusForm>("Add New Status", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            loanStatuses = await LoanStatusService.GetAllAsync();
+        }
+    }
+
+    private async Task DeleteLoanStatus(LoanStatus loanstatus)
+    {
+        var confirm = await DialogService.ShowMessageBox("Confirm Delete", "Are you sure you want to delete this loan status?", yesText: "Yes", cancelText: "No");
+
+        if (confirm == true)
+        {
+            await LoanStatusService.DeleteAsync(loanstatus.LoanStatusId);
+            loanStatuses = await LoanStatusService.GetAllAsync();
+        }
+    }
+
+    private async Task AddInterestRate()
+    {
+        if (IsFormValid)
+        {
+            await InterestRateService.AddAsync(newInterestRate);
+            interestRates = await InterestRateService.GetAllAsync();
+            newInterestRate = new InterestRate();
+        }
+    }
+
+    private async Task EditInterestRate(InterestRate interestRate)
+    {
+        var parameters = new DialogParameters
+            {
+                ["Rate"] = interestRate.Rate,
+                ["Description"] = interestRate.Description,
+                ["Term"] = interestRate.Term
+            };
+
+        // var options = new DialogOptions { CloseOnEscapeKey = true };
+        // var dialog = DialogService.Show<InputDialog>("Edit Interest Rate", parameters, options);
+        // var result = await dialog.Result;
+
+        // if (!result.Cancelled && result.Data is InterestRate updatedInterestRate)
+        // {
+        //     await InterestRateService.UpdateAsync(updatedInterestRate);
+        //     interestRates = await InterestRateService.GetAllAsync();
+        // }
+    }
+
+    private async Task DeleteInterestRate(int interestRateId)
+    {
+        var confirm = await DialogService.ShowMessageBox("Confirm Delete", "Are you sure you want to delete this interest rate?", yesText: "Yes", cancelText: "No");
+
+        if (confirm == true)
+        {
+            await InterestRateService.DeleteAsync(interestRateId);
+            interestRates = await InterestRateService.GetAllAsync();
+        }
+    }
+}

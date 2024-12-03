@@ -1,0 +1,31 @@
+﻿@page "/loanstatusform"
+@using CreditCare.Domain
+@using CreditCare.Services
+@inject CustomerService CustomerService
+@inject IDialogService DialogService
+
+@code {
+    [Parameter] public EventCallback OnStatusadded { get; set; }
+    private Customer newCustomer = new Customer();
+    private LoanStatus newLoanstatus = new LoanStatus();
+    private MudDialogInstance dialogInstance;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private async Task SubmitForm()
+    {
+        await LoanStatusService.AddAsync(newLoanstatus);
+        await OnStatusadded.InvokeAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="newLoanstatus.Name" Label="Full Name" Required="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" OnClick="SubmitForm" Color="Color.Primary">Add Customer</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="@(e => MudDialog.Close(DialogResult.Cancel()))">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>

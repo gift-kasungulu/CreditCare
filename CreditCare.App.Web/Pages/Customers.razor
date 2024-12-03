@@ -1,0 +1,137 @@
+﻿@page "/customers"
+
+<PageTitle>Customers</PageTitle>
+
+@using CreditCare.App.Web.Pages.Components
+@using CreditCare.Domain
+@using CreditCare.Services
+@inject CustomerService CustomerService
+@inject IDialogService DialogService
+
+@code {
+    private List<Customer> customers = new List<Customer>();
+    private List<Customer> filteredCustomers = new List<Customer>();
+    private string searchQuery = string.Empty;
+    private IDialogReference dialog;
+
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await CustomerService.GetAllCustomersAsync();
+        filteredCustomers = customers;
+    }
+
+    private async Task OpenAddCustomerModal()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters();
+        dialog = DialogService.Show<CustomerForm>("Add New Customer", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            customers = await CustomerService.GetAllCustomersAsync();
+            FilterCustomers();
+        }
+    }
+
+    private async Task OpenEditCustomerModal(Customer customer)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters { ["Customer"] = customer };
+        dialog = DialogService.Show<CustomerEditForm>("Edit Customer", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            customers = await CustomerService.GetAllCustomersAsync();
+            FilterCustomers();
+        }
+    }
+
+    private async Task OpenCustomerDetailsDialog(Customer customer)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters { ["Customer"] = customer };
+        dialog = DialogService.Show<CustomerDetailsDialog>("Customer Details", parameters, options);
+    }
+
+    private async Task DeleteCustomer(Customer customer)
+    {
+        await CustomerService.DeleteCustomerAsync(customer.CustomerId);
+        customers = await CustomerService.GetAllCustomersAsync();
+        FilterCustomers();
+    }
+
+    private void FilterCustomers()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredCustomers = customers;
+        }
+        else
+        {
+            filteredCustomers = customers.Where(c => c.FullName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                                     c.Email.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                                     c.NrcNumber.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                                     c.PhoneNumber.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                                     c.Address.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+}
+
+<MudGrid Class="d-flex justify-content-between align-items-center">
+    <MudItem>
+        <MudButton OnClick="OpenAddCustomerModal" Variant="Variant.Filled" Color="Color.Primary">Add New Customer</MudButton>
+    </MudItem>
+    <MudItem>
+        <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="searchQuery" Placeholder="Search customers..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" OnKeyUp="FilterCustomers" Class="search-field ml-auto" />
+    </MudItem>
+</MudGrid>
+<br />
+
+<MudTable Items="filteredCustomers">
+    <HeaderContent>
+        <MudTh>Full Name</MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>NRC Number</MudTh>
+        <MudTh>Phone Number</MudTh>
+        <MudTh>Address</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Full Name">@context.FullName</MudTd>
+        <MudTd DataLabel="Email">@context.Email</MudTd>
+        <MudTd DataLabel="NRC Number">@context.NrcNumber</MudTd>
+        <MudTd DataLabel="Phone Number">@context.PhoneNumber</MudTd>
+        <MudTd DataLabel="Address">@context.Address</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Size="Size.Small" OnClick="() => OpenCustomerDetailsDialog(context)">Details</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditCustomerModal(context)">Edit</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteCustomer(context)">Delete</MudButton>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+<!-- some inline styles -->
+<style>
+
+    .search-field {
+        width: 500px;
+        transition: all 0.3s ease-in-out;
+    }
+
+        .search-field:focus {
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+    .MuiButton-root {
+        transition: background-color 0.3s ease-in-out;
+    }
+
+        .MuiButton-root:hover {
+            background-color: #0056b3;
+        }
+</style>
