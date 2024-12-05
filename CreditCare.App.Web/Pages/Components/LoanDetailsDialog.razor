@@ -1,0 +1,66 @@
+﻿@using CreditCare.Domain
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">Loan Details</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText><strong>Loan Number:</strong> @Loan.LoanNumber</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText><strong>Customer:</strong> @Loan.Customer?.FullName</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText><strong>Principal Amount:</strong> @Loan.PrincipalAmount.ToString("C")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText><strong>Interest Rate:</strong> @Loan.InterestRate?.Rate (@Loan.InterestRate?.Rate)%</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText><strong>Start Date:</strong> @Loan.StartDate?.ToString("dd MMM yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText><strong>Due Date:</strong> @Loan.DueDate?.ToString("dd MMM yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText><strong>Processing Fee:</strong> @Loan.ProcessingFee.ToString("C")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText>
+                    <strong>Status:</strong>
+                    <MudChip Color="@GetStatusColor(Loan.Status?.Name)" Size="Size.Small">
+                        @Loan.Status?.Name
+                    </MudChip>
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public Loan Loan { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private void Close()
+    {
+        MudDialog.Cancel();
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "active" => Color.Success,
+            "pending" => Color.Warning,
+            "approved" => Color.Primary,
+            "rejected" => Color.Error,
+            _ => Color.Default
+        };
+    }
+}

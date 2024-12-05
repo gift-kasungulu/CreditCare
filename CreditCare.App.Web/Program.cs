@@ -35,6 +35,12 @@ builder.Services.AddScoped<InterestRateService>();
 builder.Services.AddScoped<InterestRateService>();
 builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CollateralStatusService>();
+builder.Services.AddScoped<LoanProductService>();
+builder.Services.AddScoped<LoanProductService>();
+builder.Services.AddScoped<RepaymentService>();
+builder.Services.AddScoped<ICollateralService, CollateralService>();   ///LOL
+
+
 
 // Ui service registration 
 builder.Services.AddMudServices();

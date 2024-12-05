@@ -1,6 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿<div class="top-row ps-3 navbar navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">CreditCare.App.Web</a>
+        <a class="navbar-brand" href="">Credit Care</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -9,24 +9,52 @@
 
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <nav class="flex-column">
+        <!-- Home -->
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
+            <NavLink class="nav-link d-flex align-items-center" href="" Match="NavLinkMatch.All">
+                <MudIcon Icon="@Icons.Material.Filled.Home" Class="me-2" /> Home
             </NavLink>
         </div>
+        
+        <!-- Customers -->
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="customers">
-                <span class="oi oi-plus" aria-hidden="true"></span> Customer
+            <NavLink class="nav-link d-flex align-items-center" href="customers">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" /> Customers
             </NavLink>
         </div>
+
+        <!-- Loans -->
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Loan
+            <NavLink class="nav-link d-flex align-items-center" href="loanspage">
+                <MudIcon Icon="@Icons.Material.Filled.Money" Class="me-2" /> Loans
             </NavLink>
         </div>
+
+        <!-- Loan products-->
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="settings">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Settings
+            <NavLink class="nav-link d-flex align-items-center" href="loanproducts">
+                <MudIcon Icon="@Icons.Material.Filled.ProductionQuantityLimits" Class="me-2" /> Loan Products
+            </NavLink>
+        </div>
+
+        <!-- Loan Repayments -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link d-flex align-items-center" href="repayments">
+                <MudIcon Icon="@Icons.Material.Filled.Payments" Class="me-2" /> Loan Repayments
+            </NavLink>
+        </div>
+
+        <!-- Collaterals -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link d-flex align-items-center" href="collateralmanagement">
+                <MudIcon Icon="@Icons.Material.Filled.Payments" Class="me-2" /> Collaterals
+            </NavLink>
+        </div>
+
+        <!-- Settings -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link d-flex align-items-center" href="settings">
+                <MudIcon Icon="@Icons.Material.Filled.Settings" Class="me-2" /> Settings
             </NavLink>
         </div>
     </nav>
@@ -35,7 +63,7 @@
 @code {
     private bool collapseNavMenu = true;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse navbar-collapse" : "navbar-collapse";
 
     private void ToggleNavMenu()
     {

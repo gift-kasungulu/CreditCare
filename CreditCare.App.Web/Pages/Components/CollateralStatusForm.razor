@@ -1,0 +1,56 @@
+﻿@using CreditCare.Domain
+@* CollateralStatusForm.razor *@
+@inherits MudComponentBase
+
+<EditForm Model="@collateralStatus" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudTextField @bind-Value="collateralStatus.Name"
+                          Label="Collateral Status Name"
+                          Required="true"
+                          RequiredError="Status name is required!" />
+            <MudValidationSummary />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" 
+                       ButtonType="ButtonType.Submit">
+                @(IsEditing ? "Update" : "Add")
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Inject] CollateralStatusService CollateralStatusService { get; set; }
+
+    [Parameter] public CollateralStatus CollateralStatus { get; set; }
+
+    private CollateralStatus collateralStatus;
+    private bool IsEditing => CollateralStatus != null;
+
+    protected override void OnInitialized()
+    {
+        collateralStatus = CollateralStatus ?? new CollateralStatus();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (IsEditing)
+        {
+            await CollateralStatusService.UpdateAsync(collateralStatus);
+        }
+        else
+        {
+            await CollateralStatusService.AddAsync(collateralStatus);
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

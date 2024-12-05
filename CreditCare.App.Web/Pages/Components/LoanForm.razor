@@ -1,64 +1,212 @@
-﻿@using CreditCare.Domain
-@inject IDialogReference DialogReference
+﻿@page "/loanform"
+@using CreditCare.Domain
+@using CreditCare.Services
+@using static CreditCare.Domain.Loan
+@inject LoanService LoanService
+@inject CustomerService CustomerService
+@inject InterestRateService InterestRateService
+@inject LoanStatusService LoanStatusService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 @code {
-    [Parameter] public Loan Loan { get; set; }
-    [Parameter] public List<Customer> Customers { get; set; } = new();
-    [Parameter] public List<InterestRate> InterestRates { get; set; } = new();
-    [Parameter] public List<LoanStatus> LoanStatuses { get; set; } = new();
+    [Parameter] public EventCallback OnLoanAdded { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
 
-    private void Submit()
+    private Loan newLoan = new Loan();
+    private List<Customer> customers = new List<Customer>();
+    private List<InterestRate> interestRates = new List<InterestRate>();
+    private List<LoanStatus> loanStatuses = new List<LoanStatus>();
+    private List<LoanProduct> loanProducts = new List<LoanProduct>();
+    private MudForm loanForm;
+
+    // Enum for period types
+    private LoanPeriodType[] periodTypes = Enum.GetValues(typeof(LoanPeriodType)).Cast<LoanPeriodType>().ToArray();
+
+    protected override async Task OnInitializedAsync()
     {
-        DialogReference.Close(DialogResult.Ok(Loan));
+        try
+        {
+            // Populate dropdowns
+            customers = await CustomerService.GetAllCustomersAsync();
+            interestRates = await InterestRateService.GetAllAsync();
+            loanStatuses = await LoanStatusService.GetAllAsync();
+            loanProducts = await LoanService.GetAllLoanProductsAsync(); 
+
+            // Set default values
+            newLoan.PeriodType = LoanPeriodType.Monthly;
+            newLoan.RepaymentCycles = 1;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
     }
 
-    private void Cancel()
+    private async Task SubmitForm()
     {
-        DialogReference.Close(DialogResult.Cancel());
+        try
+        {
+            // Validate required fields
+            if (newLoan.Customer == null || newLoan.InterestRate == null ||
+                newLoan.Status == null|| newLoan.LoanProduct == null || newLoan.PrincipalAmount <= 0)
+            {
+                Snackbar.Add("Please fill all required fields", Severity.Warning);
+                return;
+            }
+
+            // Generate 4-digit loan number
+            newLoan.LoanNumber = await GenerateLoanNumberAsync();
+
+            // Set current date as start date
+            newLoan.StartDate = DateTime.Now;
+
+            // Calculate due date dynamically based on period type and cycles
+            newLoan.DueDate = CalculateDueDate();
+
+            // Add loan
+            await LoanService.AddLoanAsync(newLoan);
+
+            Snackbar.Add("Loan added successfully", Severity.Success);
+
+            await OnLoanAdded.InvokeAsync();
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding loan: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // Dynamic due date calculation method
+    private DateTime CalculateDueDate()
+    {
+        return newLoan.PeriodType switch
+        {
+            LoanPeriodType.Weekly => newLoan.StartDate.Value.AddDays(7 * newLoan.RepaymentCycles),
+            LoanPeriodType.BiWeekly => newLoan.StartDate.Value.AddDays(14 * newLoan.RepaymentCycles),
+            LoanPeriodType.ThreeWeeks => newLoan.StartDate.Value.AddDays(21 * newLoan.RepaymentCycles),
+            LoanPeriodType.FourWeeks => newLoan.StartDate.Value.AddDays(28 * newLoan.RepaymentCycles),
+            LoanPeriodType.Monthly => newLoan.StartDate.Value.AddMonths(1 * newLoan.RepaymentCycles),
+            LoanPeriodType.Quarterly => newLoan.StartDate.Value.AddMonths(3 * newLoan.RepaymentCycles),
+            LoanPeriodType.SemiAnnual => newLoan.StartDate.Value.AddMonths(6 * newLoan.RepaymentCycles),
+            LoanPeriodType.Annual => newLoan.StartDate.Value.AddYears(1 * newLoan.RepaymentCycles),
+            _ => throw new ArgumentException("Invalid period type")
+        };
+    }
+
+    private async Task ValidateAndSubmit()
+    {
+        await loanForm.Validate();
+
+        if (loanForm.IsValid)
+        {
+            await SubmitForm();
+        }
+        else
+        {
+            Snackbar.Add("Please fill out all required fields correctly.", Severity.Warning);
+        }
+    }
+
+    private async Task<string> GenerateLoanNumberAsync()
+    {
+        // Get the last loan number or default to 0
+        var lastLoanNumber = await LoanService.GetLastLoanNumberAsync();
+
+        int nextNumber = 1;
+        if (!string.IsNullOrEmpty(lastLoanNumber))
+        {
+            nextNumber = int.Parse(lastLoanNumber) + 1;
+        }
+
+        // Ensure 4-digit format
+        return nextNumber.ToString("D4");
     }
 }
 
 <MudDialog>
-    <MudDialogTitle>Add or Edit Loan</MudDialogTitle>
-    <MudDialogContent>
-        <MudGrid Spacing="3">
-            <MudItem xs="12" md="6">
-                <MudSelect T="int" @bind-Value="Loan.CustomerId" Label="Select Customer" Dense="true" Searchable="true">
-                    @foreach (var customer in Customers)
-                    {
-                        <MudSelectItem Value="@customer.CustomerId">@customer.FullName</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudNumericField @bind-Value="Loan.PrincipalAmount" Label="Principal Amount" Variant="Variant.Outlined" />
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudDatePicker @bind-Value="Loan.StartDate" Label="Start Date" Variant="Variant.Outlined" />
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudDatePicker @bind-Value="Loan.DueDate" Label="Due Date" Variant="Variant.Outlined" />
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudSelect T="int" @bind-Value="Loan.InterestRateId" Label="Interest Rate" Dense="true" Searchable="true">
-                    @foreach (var rate in InterestRates)
-                    {
-                        <MudSelectItem Value="@rate.InterestRateId">@rate.Rate</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudSelect T="int" @bind-Value="Loan.LoanStatusId" Label="Loan Status" Dense="true" Searchable="true">
-                    @foreach (var status in LoanStatuses)
-                    {
-                        <MudSelectItem Value="@status.LoanStatusId">@status.Name</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-        </MudGrid>
-    </MudDialogContent>
-    <MudDialogActions>
-        <MudButton OnClick="Submit" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
-        <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Text">Cancel</MudButton>
-    </MudDialogActions>
+    <DialogContent>
+        <MudForm @ref="loanForm" OnValidSubmit="SubmitForm">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="LoanProduct" Label="Loan Product" AnchorOrigin="Origin.BottomCenter"
+                               @bind-Value="newLoan.LoanProduct" Required="true">
+                        @foreach (var product in loanProducts)
+                        {
+                            <MudSelectItem Value="@product">@product.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="Customer" Label="Customer" AnchorOrigin="Origin.BottomCenter"
+                               @bind-Value="newLoan.Customer" Required="true">
+                        @foreach (var customer in customers)
+                        {
+                            <MudSelectItem Value="@customer">@customer.FullName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="newLoan.PrincipalAmount" Label="Principal Amount"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     Required="true" Min="0" ErrorText="Principal Amount is required and must be greater than 0." />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="InterestRate" Label="Interest Rate" AnchorOrigin="Origin.BottomCenter"
+                               @bind-Value="newLoan.InterestRate" Required="true">
+                        @foreach (var rate in interestRates)
+                        {
+                            <MudSelectItem Value="@rate">@rate.Rate (@rate.Rate%)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="newLoan.ProcessingFee" Label="Processing Fee"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     Min="0" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="LoanStatus" Label="Loan Status" AnchorOrigin="Origin.BottomCenter"
+                               @bind-Value="newLoan.Status" Required="true">
+                        @foreach (var status in loanStatuses)
+                        {
+                            <MudSelectItem Value="@status">@status.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="LoanPeriodType" Label="Repayment Period"
+                               @bind-Value="newLoan.PeriodType" Required="true">
+                        @foreach (var periodType in periodTypes)
+                        {
+                            <MudSelectItem Value="@periodType">@periodType.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="newLoan.RepaymentCycles" Label="Number of Repayment Cycles"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     Required="true" Min="1" Max="24" ErrorText="Repayment Cycles must be between 1 and 24." />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info">
+                        Calculated Due Date: @(newLoan.StartDate.HasValue ? CalculateDueDate().ToString("dd MMM yyyy") : "Not available")
+                    </MudAlert>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" OnClick="ValidateAndSubmit" Color="Color.Primary">Add Loan</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="@(e => MudDialog.Close(DialogResult.Cancel()))">Cancel</MudButton>
+    </DialogActions>
 </MudDialog>

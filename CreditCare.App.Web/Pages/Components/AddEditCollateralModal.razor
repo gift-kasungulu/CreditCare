@@ -1,0 +1,43 @@
+﻿@page "/collateralmgform"
+@using CreditCare.Domain
+@inject ICollateralService CollateralService
+
+<MudContainer>
+    <MudText Typo="Typo.h5" Class="mb-4">Collateral Management</MudText>
+
+    <MudTable Items="collaterals" RowClick="OnRowClick" Hover="true" Class="mb-4">
+        <HeaderContent>
+            <MudTh>Description</MudTh>
+            <MudTh>Value</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Loan</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Description</MudTd>
+            <MudTd>@context.Value.ToString("C")</MudTd>
+            <MudTd>@context.collateralStatus?.Name</MudTd>
+            <MudTd>@context.Loan.LoanId</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddCollateral">Add Collateral</MudButton>
+</MudContainer>
+
+@code {
+    private IEnumerable<Collateral> collaterals = new List<Collateral>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        collaterals = await CollateralService.GetAllCollateralsAsync();
+    }
+
+    private void OnRowClick(Collateral collateral)
+    {
+        // Navigate to a detail or edit page
+    }
+
+    private void AddCollateral()
+    {
+        // Open a modal or navigate to add collateral page
+    }
+}

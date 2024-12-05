@@ -1,0 +1,332 @@
+﻿@page "/loanspage"
+@using CreditCare.App.Web.Pages.Components
+@using CreditCare.Domain
+@using CreditCare.Services
+@inject LoanService LoanService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<div class="fade-in">
+  <MudText Typo="Typo.h5">Loans Management</MudText>
+  <hr />
+    <div class="card-container">
+        <div class="card bg-info text-white mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Large" /> Total Loans</h5>
+                <h3 class="card-text">@totalLoans</h3>
+            </div>
+        </div>
+        <div class="card bg-primary text-white mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Large" /> Active Loans</h5>
+                <h3 class="card-text">@activeLoans</h3>
+            </div>
+        </div>
+        <div class="card bg-success text-white mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" /> Settled Loans</h5>
+                <h3 class="card-text">@settledLoans</h3>
+            </div>
+        </div>
+        <div class="card bg-danger text-white mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Large" /> Defaulted Loans</h5>
+                <h3 class="card-text">@defaultedLoans</h3>
+            </div>
+        </div>
+    </div>
+
+  <br/>
+
+  <MudGrid AlignItems="Center" Justify="Justify.SpaceBetween" GutterSize="GutterSize.Small">
+    <!-- Title -->
+    <MudItem xs="12" sm="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenLoanForm" Animated="true">
+                Add New Loan
+            </MudButton>
+    </MudItem>
+
+    <!-- Search Bar -->
+    <MudItem xs="12" sm="4">
+      <div>
+        <MudTextField @bind-Value="SearchTerm" Label="Search Loans" Placeholder="Enter loan details..."
+                        Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true"
+                        OnBlur="@ApplySearch" Variant="Variant.Outlined" Margin="Margin.Dense" Animated="true" />
+      </div>
+    </MudItem>
+  </MudGrid>
+
+  <br/>
+
+  <MudTable Items="@loans" Hover="true" Striped="true" Dense="true" Filter="new Func<Loan, bool>(FilterFunc)" Animated="true">
+    <HeaderContent>
+      <!-- Add Repayment Amount column -->
+      <MudTh>Loan Number</MudTh>
+      <MudTh>Customer</MudTh>
+      <MudTh>Principal Amount</MudTh>
+      <MudTh>Repayment Amount</MudTh>
+      <MudTh>Interest Rate</MudTh>
+      <MudTh>Start Date</MudTh>
+      <MudTh>Due Date</MudTh>
+      <MudTh>Status</MudTh>
+      <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+      <MudTd DataField="LoanNumber">@context.LoanNumber</MudTd>
+      <MudTd>@context.Customer?.FullName</MudTd>
+      <MudTd>@context.PrincipalAmount.ToString("N")</MudTd>
+      <MudTd>@CalculateRepaymentAmount(context).ToString("N")</MudTd>
+      <MudTd>@context.InterestRate?.Rate (@context.InterestRate?.Rate)%</MudTd>
+      <MudTd>@context.StartDate?.ToString("dd MMM yyyy")</MudTd>
+      <MudTd>@context.DueDate?.ToString("dd MMM yyyy")</MudTd>
+      <MudTd>
+        <MudChip Color="@GetStatusColor(context.Status?.Name)" Size="Size.Small">
+          @context.Status?.Name
+        </MudChip>
+      </MudTd>
+      <MudTd>
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Variant="Variant.Outlined" Size="Size.Small">
+                    <MudMenuItem OnClick="() => ViewLoanDetails(context)">
+                        <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="mr-2" /> View Details
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="() => EditLoan(context)">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" /> Edit Loan
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="() => UpdateLoanStatus(context)">
+                        <MudIcon Icon="@Icons.Material.Filled.Update" Class="mr-2" /> Update Status
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="() => MarkLoanAsPaid(context)">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="mr-2" /> Mark as Paid
+                    </MudMenuItem>
+                </MudMenu>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</div>
+
+
+@code {
+    private List<Loan> loans;
+    private string searchString = "";
+    private int totalLoans;
+    private int activeLoans;
+    private int settledLoans;
+    private int defaultedLoans;
+    private string SearchTerm { get; set; } = "";
+    private string SelectedStatus { get; set; } = "";
+    private List<Loan> Loans { get; set; } = new List<Loan>();
+    private List<Loan> FilteredLoans { get; set; } = new List<Loan>();
+    private List<Loan> DisplayedLoans { get; set; } = new List<Loan>();
+    private List<string> LoanStatuses { get; set; } = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadLoans(); // Load loans first.
+            await LoanService.UpdateLoanStatusesAsync(); // Update statuses next.
+            await CalculateLoanStatistics(); 
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error initializing page: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ApplySearch()
+    {
+        // Search logic
+        if (string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            FilteredLoans = new List<Loan>(Loans);
+        }
+        else
+        {
+            FilteredLoans = Loans.Where(loan => loan.LoanNumber.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        UpdateDisplayedLoans();
+    }
+
+    private void ApplyFilter()
+    {
+        // Filter by status logic
+        if (string.IsNullOrEmpty(SelectedStatus))
+        {
+            DisplayedLoans = new List<Loan>(FilteredLoans); // If no status selected, show all filtered loans
+        }
+        else
+        {
+            DisplayedLoans = FilteredLoans.Where(loan => loan.Status.Name == SelectedStatus).ToList();
+        }
+    }
+
+    private void ClearFilters()
+    {
+        // Reset search and filter
+        SearchTerm = "";
+        SelectedStatus = "";
+        FilteredLoans = new List<Loan>(Loans);
+        DisplayedLoans = new List<Loan>(Loans);
+    }
+
+    private void UpdateDisplayedLoans()
+    {
+        // Apply status filter on the search result
+        ApplyFilter();
+    }
+
+    private async Task CalculateLoanStatistics()
+{
+    try
+    {
+        var loanList = await LoanService.GetAllLoansAsync();
+        
+        // Debugging logs to inspect the loan statuses
+        foreach (var loan in loanList)
+        {
+            Console.WriteLine($"Loan {loan.LoanNumber}: Status = {loan.Status?.Name}");
+        }
+
+        totalLoans = loanList.Count;
+        activeLoans = loanList.Count(l => l.Status.Name?.Equals("Active", StringComparison.OrdinalIgnoreCase) == true);
+        settledLoans = loanList.Count(l => l.Status.Name?.Equals("settled", StringComparison.OrdinalIgnoreCase) == true);
+        defaultedLoans = loanList.Count(l => l.Status.Name?.Equals("Defaulted", StringComparison.OrdinalIgnoreCase) == true);
+    }
+    catch (Exception ex)
+    {
+        Snackbar.Add($"Error calculating loan statistics: {ex.Message}", Severity.Error);
+    }
+}
+
+    private Color GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "settled" => Color.Success,
+            "pending" => Color.Warning,
+            "active" => Color.Primary,
+            "defaulted" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private async Task UpdateLoanStatus(Loan loan)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Loan", loan }
+        };
+
+        var dialog = DialogService.Show<UpdateLoanStatusDialog>("Update Loan Status", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            await LoadLoans();
+        }
+    }
+
+    private void ViewLoanDetails(Loan loan)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Loan", loan }
+        };
+
+        DialogService.Show<LoanDetailsDialog>("Loan Details", parameters);
+    }
+
+    private void EditLoan(Loan loan)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Loan", loan }
+        };
+
+        DialogService.Show<EditLoanDialog>("Edit Loan", parameters);
+    }
+
+    private decimal CalculateRepaymentAmount(Loan loan)
+    {
+        return loan.PrincipalAmount * (1 + (loan.InterestRate?.Rate / 100 ?? 0));
+    }
+
+    private async Task MarkLoanAsPaid(Loan loan)
+    {
+        try
+        {
+            await LoanService.MarkLoanAsPaidAsync(loan.LoanId);
+            Snackbar.Add("Loan marked as paid successfully.", Severity.Success);
+            await LoadLoans();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error marking loan as paid: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CheckAndUpdateLoanStatuses()
+    {
+        try
+        {
+            await LoanService.UpdateLoanStatusesAsync();
+            await LoadLoans(); // Refresh loans after status update
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating loan statuses: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task OpenLoanForm()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
+
+        var dialog = DialogService.Show<LoanForm>("Add New Loan", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            await LoadLoans();
+        }
+    }
+
+    private async Task LoadLoans()
+    {
+        try
+        {
+            var loanList = await LoanService.GetAllLoansWithRepaymentAsync();
+            LoanStatuses = Loans.Select(l => l.Status.Name).Distinct().ToList();
+            FilteredLoans = new List<Loan>(Loans); // Initialize filtered list
+            DisplayedLoans = new List<Loan>(Loans); // Initialize displayed list
+            loans = loanList.Select(loan =>
+            {
+                loan.RepaymentAmount = CalculateRepaymentAmount(loan);
+                return loan;
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading loans: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private bool FilterFunc(Loan loan) =>
+        string.IsNullOrWhiteSpace(searchString) ||
+        loan.LoanNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+        loan.Customer?.FullName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true;
+
+    private async Task MarkLoanAsPaid(int loanId)
+    {
+        await LoanService.MarkLoanAsPaidAsync(loanId);
+        Snackbar.Add("Loan marked as paid successfully.", Severity.Success);
+        loans = await LoanService.GetAllLoansWithRepaymentAsync();
+    }
+
+    private bool IsMarkAsPaidEnabled(Loan loan) => loan.Status?.Name != "Settled";
+}

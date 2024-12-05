@@ -1,0 +1,153 @@
+﻿@using CreditCare.Domain
+@using CreditCare.Services
+@inject LoanService LoanService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            
+                            <MudText Typo="Typo.body2">Loan Number: @Loan.LoanNumber</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="6">
+                                <MudText>Total Loan Amount: @Loan.PrincipalAmount.ToString("C")</MudText>
+                                <MudText>Remaining Balance: @CalculateRemainingBalance().ToString("C")</MudText>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudNumericField @bind-Value="repaymentAmount"
+                                                 Label="Repayment Amount"
+                                                 Variant="Variant.Outlined"
+                                                 Min="0"
+                                                 Max="@CalculateRemainingBalance()"
+                                                 Step="1"
+                                                 Immediate="true" />
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudSelect @bind-Value="paymentMethod"
+                                           Label="Payment Method"
+                                           Variant="Variant.Outlined"
+                                           Required="true">
+                                    <MudSelectItem Value="@("Cash")">Cash</MudSelectItem>
+                                    <MudSelectItem Value="@("Bank Transfer")">Bank Transfer</MudSelectItem>
+                                    <MudSelectItem Value="@("Online Payment")">Online Payment</MudSelectItem>
+                                    <MudSelectItem Value="@("Cheque")">Cheque</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="paymentReference"
+                                              Label="Payment Reference (Optional)"
+                                              Variant="Variant.Outlined"
+                                              Hint="Add transaction ID or reference number" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()" Color="Color.Secondary">Cancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="ProcessRepayment"
+                   Disabled="@(!IsRepaymentValid())">
+            Process Repayment
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance Dialog { get; set; }
+
+    [Parameter]
+    public Loan Loan { get; set; }
+
+    private decimal repaymentAmount;
+    private string paymentMethod;
+    private string paymentReference;
+
+    // Calculate the remaining balance considering the interest and processing fee
+    private decimal CalculateRemainingBalance()
+    {
+        decimal totalRepaymentAmount = Loan.PrincipalAmount + (Loan.InterestRate.Rate / 100m * Loan.PrincipalAmount);
+        decimal totalRepaid = Loan.Repayments?.Sum(r => r.Amount) ?? 0m;
+        return totalRepaymentAmount - totalRepaid;
+    }
+
+
+    private bool IsRepaymentValid()
+    {
+        return repaymentAmount > 0 &&
+               repaymentAmount <= CalculateRemainingBalance() &&
+               !string.IsNullOrWhiteSpace(paymentMethod);
+    }
+
+    private async Task ProcessRepayment()
+    {
+        try
+        {
+            // Validate the repayment input fields
+            if (repaymentAmount <= 0)
+            {
+                Snackbar.Add("Repayment amount must be greater than zero.", Severity.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(paymentMethod) || string.IsNullOrWhiteSpace(paymentReference))
+            {
+                Snackbar.Add("Payment method and reference cannot be empty.", Severity.Warning);
+                return;
+            }
+
+            // Create a new repayment record
+            var repayment = new Repayment
+                {
+                    Amount = repaymentAmount,
+                    PaymentMethod = paymentMethod,
+                    PaymentReference = paymentReference,
+                    LoanId = Loan.LoanId,
+                    Date = DateTime.Now
+                };
+
+            // Add the repayment to the database via LoanService
+            await LoanService.AddRepaymentAsync(repayment);
+
+            // Refresh the loan's repayment data from the database
+            Loan.Repayments = await LoanService.GetRepaymentsByLoanIdAsync(Loan.LoanId);
+
+            // Calculate the remaining balance
+            var remainingBalance = CalculateRemainingBalance();
+
+            // Check if the loan is fully repaid
+            if (remainingBalance <= 0)
+            {
+                await LoanService.MarkLoanAsPaidAsync(Loan.LoanId);
+                Snackbar.Add("Loan fully repaid. Congratulations!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Repayment processed successfully. Remaining balance: {remainingBalance:C}", Severity.Info);
+            }
+
+            // Close the dialog with a success result
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error processing repayment: {ex.Message}", Severity.Error);
+        }
+    }
+
+
+}

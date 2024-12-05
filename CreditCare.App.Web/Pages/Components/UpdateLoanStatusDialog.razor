@@ -1,0 +1,65 @@
+﻿@using CreditCare.Domain
+@using CreditCare.Services
+@inject LoanService LoanService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudSelect T="LoanStatus" Label="Update Loan Status" @bind-Value="selectedStatus">
+            @foreach (var status in loanStatuses)
+            {
+                <MudSelectItem Value="@status">@status.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="UpdateStatus">Update</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Close">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public Loan Loan { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private List<LoanStatus> loanStatuses = new List<LoanStatus>();
+    private LoanStatus selectedStatus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            loanStatuses = await LoanService.GetAllLoanStatusesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading loan statuses: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task UpdateStatus()
+    {
+        if (selectedStatus == null)
+        {
+            Snackbar.Add("Please select a status", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await LoanService.UpdateLoanStatusAsync(Loan.LoanId, selectedStatus.Name);
+            Snackbar.Add("Loan status updated successfully", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating loan status: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Close()
+    {
+        MudDialog.Cancel();
+    }
+}

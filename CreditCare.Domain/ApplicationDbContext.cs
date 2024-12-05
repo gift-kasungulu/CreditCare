@@ -19,6 +19,9 @@ namespace CreditCare.Domain
         public virtual DbSet<LoanStatus> LoanStatuses { get; set; }
         public virtual DbSet<InterestRate> IRates { get; set; }
         public virtual DbSet<Subscription> Subscriptions { get; set; }
+        public virtual DbSet<LoanProduct> LoanProducts { get; set; }
+        public virtual DbSet<Repayment> Repayments { get; set; }
+
         
         
 

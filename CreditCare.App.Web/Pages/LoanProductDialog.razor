@@ -1,0 +1,54 @@
+﻿@page "/loanProductDialog"
+@using MudBlazor
+@using CreditCare.Domain
+@inject IDialogService DialogService
+@inject LoanProductService LoanProductService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="loanProduct.Name" Label="Product Name" Required="true" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="loanProduct.Description" Label="Description" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="loanProduct.MaximumAmount" Label="Maximum Amount"
+                                 Required="true" Min="0" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="loanProduct.MinimumAmount" Label="Minimum Amount"
+                                 Required="true" Min="0" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="loanProduct.DefaultInterestRate" Label="Default Interest Rate"
+                                 Min="0" FullWidth="true" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" OnClick="Save" Color="Color.Primary">@(IsEditMode ? "Update" : "Add") Loan Product</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="@(() => MudDialog.Close(DialogResult.Cancel()))">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public LoanProduct loanProduct { get; set; } = new LoanProduct();
+    [Parameter] public bool IsEditMode { get; set; } = false;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private async Task Save()
+    {
+        if (IsEditMode)
+        {
+            await LoanProductService.UpdateLoanProductAsync(loanProduct);
+        }
+        else
+        {
+            await LoanProductService.AddLoanProductAsync(loanProduct);
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

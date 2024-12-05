@@ -8,6 +8,54 @@
 @inject CustomerService CustomerService
 @inject IDialogService DialogService
 
+<div class="fade-in">
+    <MudText Typo="Typo.h5">Customer Management</MudText>
+    <hr />
+
+    <MudGrid Justify="Justify.SpaceBetween" Gutter="GutterSize.Small" Class="d-flex justify-content-between align-items-center" Animated="true">
+        <MudItem xs="12" sm="6" md="3">
+            <MudButton OnClick="OpenAddCustomerModal" Variant="Variant.Filled" Color="Color.Primary" Animated="true">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" /> Add New Customer
+            </MudButton>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3" Class="d-flex justify-content-end">
+            <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="searchQuery" Placeholder="Search customers..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" OnKeyUp="FilterCustomers" Class="search-field" Animated="true" />
+        </MudItem>
+    </MudGrid>
+
+    <MudTable Items="filteredCustomers" FixedHeader="true" Hover="true" Elevation="1" Breakpoint="Breakpoint.Sm" Animated="true">
+        <HeaderContent>
+            <MudTh>Full Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>NRC Number</MudTh>
+            <MudTh>Phone Number</MudTh>
+            <MudTh>Address</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Full Name">@context.FullName</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="NRC Number">@context.NrcNumber</MudTd>
+            <MudTd DataLabel="Phone Number">@context.PhoneNumber</MudTd>
+            <MudTd DataLabel="Address">@context.Address</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudButton Variant="Variant.Text" Color="Color.Tertiary" Size="Size.Small" OnClick="() => OpenCustomerDetailsDialog(context)" Animated="true">
+                    <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-1" /> Details
+                </MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditCustomerModal(context)" Animated="true">
+                    <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                </MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteCustomer(context)" Animated="true">
+                    <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</div>
+
 @code {
     private List<Customer> customers = new List<Customer>();
     private List<Customer> filteredCustomers = new List<Customer>();
@@ -23,8 +71,7 @@
     private async Task OpenAddCustomerModal()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true };
-        var parameters = new DialogParameters();
-        dialog = DialogService.Show<CustomerForm>("Add New Customer", parameters, options);
+        dialog = DialogService.Show<CustomerForm>("Add New Customer", new DialogParameters(), options);
 
         var result = await dialog.Result;
         if (!result.Cancelled)
@@ -78,60 +125,3 @@
         }
     }
 }
-
-<MudGrid Class="d-flex justify-content-between align-items-center">
-    <MudItem>
-        <MudButton OnClick="OpenAddCustomerModal" Variant="Variant.Filled" Color="Color.Primary">Add New Customer</MudButton>
-    </MudItem>
-    <MudItem>
-        <MudTextField Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value="searchQuery" Placeholder="Search customers..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" OnKeyUp="FilterCustomers" Class="search-field ml-auto" />
-    </MudItem>
-</MudGrid>
-<br />
-
-<MudTable Items="filteredCustomers">
-    <HeaderContent>
-        <MudTh>Full Name</MudTh>
-        <MudTh>Email</MudTh>
-        <MudTh>NRC Number</MudTh>
-        <MudTh>Phone Number</MudTh>
-        <MudTh>Address</MudTh>
-        <MudTh>Actions</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Full Name">@context.FullName</MudTd>
-        <MudTd DataLabel="Email">@context.Email</MudTd>
-        <MudTd DataLabel="NRC Number">@context.NrcNumber</MudTd>
-        <MudTd DataLabel="Phone Number">@context.PhoneNumber</MudTd>
-        <MudTd DataLabel="Address">@context.Address</MudTd>
-        <MudTd DataLabel="Actions">
-            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Size="Size.Small" OnClick="() => OpenCustomerDetailsDialog(context)">Details</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditCustomerModal(context)">Edit</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteCustomer(context)">Delete</MudButton>
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <MudTablePager />
-    </PagerContent>
-</MudTable>
-
-<!-- some inline styles -->
-<style>
-
-    .search-field {
-        width: 500px;
-        transition: all 0.3s ease-in-out;
-    }
-
-        .search-field:focus {
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-
-    .MuiButton-root {
-        transition: background-color 0.3s ease-in-out;
-    }
-
-        .MuiButton-root:hover {
-            background-color: #0056b3;
-        }
-</style>

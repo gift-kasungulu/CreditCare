@@ -4,6 +4,7 @@ using CreditCare.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CreditCare.App.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241204150555_LoanProductAdded")]
+    partial class LoanProductAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,6 +36,7 @@ namespace CreditCare.App.Web.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("LoanId")
@@ -256,38 +259,6 @@ namespace CreditCare.App.Web.Data.Migrations
                     b.HasIndex("CustomerId");
 
                     b.ToTable("Notifications");
-                });
-
-            modelBuilder.Entity("CreditCare.Domain.Repayment", b =>
-                {
-                    b.Property<int>("RepaymentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RepaymentId"), 1L, 1);
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("LoanId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentReference")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("RepaymentId");
-
-                    b.HasIndex("LoanId");
-
-                    b.ToTable("Repayments");
                 });
 
             modelBuilder.Entity("CreditCare.Domain.Subscription", b =>
@@ -588,17 +559,6 @@ namespace CreditCare.App.Web.Data.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("CreditCare.Domain.Repayment", b =>
-                {
-                    b.HasOne("CreditCare.Domain.Loan", "Loan")
-                        .WithMany("Repayments")
-                        .HasForeignKey("LoanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Loan");
-                });
-
             modelBuilder.Entity("CreditCare.Domain.Subscription", b =>
                 {
                     b.HasOne("CreditCare.Domain.Customer", "Customer")
@@ -669,8 +629,6 @@ namespace CreditCare.App.Web.Data.Migrations
             modelBuilder.Entity("CreditCare.Domain.Loan", b =>
                 {
                     b.Navigation("Collaterals");
-
-                    b.Navigation("Repayments");
                 });
 
             modelBuilder.Entity("CreditCare.Domain.LoanProduct", b =>

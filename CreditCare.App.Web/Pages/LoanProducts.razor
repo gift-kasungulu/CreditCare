@@ -1,0 +1,119 @@
+﻿@page "/loanproducts"
+@using CreditCare.App.Web.Pages.Components
+@inject LoanProductService LoanProductService
+@inject IDialogService DialogService
+@using CreditCare.Domain
+@using MudBlazor
+
+<PageTitle>Loan Products</PageTitle>
+
+<MudText Typo="Typo.h6"> Loan Products</MudText>
+<hr />
+    <div class="d-flex justify-space-between align-center mb-3">
+    <MudTextField @bind-Value="searchString"
+                  Placeholder="Search Loan Products..."
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  IconSize="Size.Medium"
+                  Class="mb-4"
+                  Style="width: 100%; max-width: 400px;" />
+        <MudButton StartIcon="@Icons.Material.Filled.Add"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Dense="true"
+                   OnClick="OpenAddDialog"
+                   Class="animated-button">
+            New Loan Product
+        </MudButton>
+    </div>
+
+    <MudTable Items="@loanProducts"
+              Hover="true"
+              Dense="true"
+              Striped="true"
+              Filter="new Func<LoanProduct, bool>(FilterFunc)"
+              Class="mud-table-elevation-1 fade-in">
+        <HeaderContent>
+            <MudTh>Product Name</MudTh>
+            <MudTh>Description</MudTh>
+            <MudTh>Max Amount</MudTh>
+            <MudTh>Min Amount</MudTh>
+            <MudTh>Default Interest Rate</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Product Name" Class="table-row">@context.Name</MudTd>
+            <MudTd DataLabel="Description" Class="table-row">@context.Description</MudTd>
+            <MudTd DataLabel="Max Amount" Class="table-row">@context.MaximumAmount.ToString("C2")</MudTd>
+            <MudTd DataLabel="Min Amount" Class="table-row">@context.MinimumAmount.ToString("C2")</MudTd>
+            <MudTd DataLabel="Interest Rate" Class="table-row">@context.DefaultInterestRate.ToString("P2")</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               OnClick="() => EditLoanProduct(context.LoanProductId)"
+                               Title="Edit"
+                               Class="animated-icon-button" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="() => DeleteLoanProduct(context.LoanProductId)"
+                               Title="Delete"
+                               Class="animated-icon-button" />
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+
+
+
+
+@code {
+    private List<LoanProduct> loanProducts = new List<LoanProduct>();
+    private LoanProduct loanProduct = new LoanProduct();
+    private bool IsEditMode => loanProduct.LoanProductId > 0;
+    private string searchString = "";
+
+    private bool FilterFunc(LoanProduct loanp) =>
+        string.IsNullOrWhiteSpace(searchString) ||
+        loanp.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+        loanp.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLoanProducts();
+    }
+
+    private async Task LoadLoanProducts()
+    {
+        loanProducts = (await LoanProductService.GetAllLoanProductsAsync()).ToList();
+    }
+
+    private void OpenAddDialog()
+    {
+        loanProduct = new LoanProduct(); // Reset the loan product for adding
+        var dialogParameters = new DialogParameters
+    {
+        { "loanProduct", loanProduct },
+        { "IsEditMode", false }
+    };
+        DialogService.Show<LoanProductDialog>("Add Loan Product", dialogParameters);
+    }
+
+    private void EditLoanProduct(int loanProductId)
+    {
+        loanProduct = loanProducts.FirstOrDefault(lp => lp.LoanProductId == loanProductId);
+        var dialogParameters = new DialogParameters
+    {
+        { "loanProduct", loanProduct },
+        { "IsEditMode", true }
+    };
+        DialogService.Show<LoanProductDialog>("Edit Loan Product", dialogParameters);
+    }
+
+    private async Task DeleteLoanProduct(int loanProductId)
+    {
+        await LoanProductService.DeleteLoanProductAsync(loanProductId);
+        await LoadLoanProducts(); // Reload the loan products after deletion
+    }
+}

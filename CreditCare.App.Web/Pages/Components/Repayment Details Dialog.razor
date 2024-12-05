@@ -1,0 +1,138 @@
+﻿@using CreditCare.Domain
+@using CreditCare.Services
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Loan Repayment Details</MudText>
+                            <MudText Typo="Typo.body2">Loan Number: @Loan.LoanNumber</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="6">
+                                <MudText>Loan Amount: @Loan.PrincipalAmount.ToString("C")</MudText>
+                                <MudText>Interest Rate: @Loan.InterestRate.Rate.ToString("P2")</MudText>
+                                <MudText>Total Repayable: @CalculateTotalRepayableAmount().ToString("C")</MudText>
+                                <MudText>Loan Period: @GetLoanPeriodDescription()</MudText>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudText>Remaining Balance: @CalculateRemainingBalance().ToString("C")</MudText>
+                                <MudText>Repaid Amount: @Loan.RepaymentAmount.ToString("C")</MudText>
+                                <MudText>
+                                    Repayment Status:
+                                    <MudChip Color="@GetRepaymentStatusColor(Loan.Status.Name)"
+                                             Size="Size.Small">
+                                        @Loan.Status.Name
+                                    </MudChip>
+                                </MudText>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudDivider Class="my-4" />
+
+                        <MudText Typo="Typo.h6" Class="mb-2">Loan Details</MudText>
+                        <MudGrid>
+                            <MudItem xs="6">
+                                <MudText>Start Date: @(Loan.StartDate?.ToString("dd MMM yyyy") ?? "N/A")</MudText>
+                                <MudText>Due Date: @(Loan.DueDate?.ToString("dd MMM yyyy") ?? "N/A")</MudText>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudText>Processing Fee: @Loan.ProcessingFee.ToString("C")</MudText>
+                                <MudText>Repayment Cycles: @Loan.RepaymentCycles</MudText>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudDivider Class="my-4" />
+
+                        <MudText Typo="Typo.h6" Class="mb-2">Customer Information</MudText>
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudText>Name: @Loan.Customer.FullName</MudText>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudDivider Class="my-4" />
+
+                        <MudText Typo="Typo.h6" Class="mb-2">Collateral Information</MudText>
+                        @if (Loan.Collaterals != null && Loan.Collaterals.Any())
+                        {
+                            <MudTable Items="@Loan.Collaterals"
+                                      Hover="true"
+                                      Dense="true">
+                                <HeaderContent>
+                                    <MudTh>Type</MudTh>
+                                    <MudTh>Description</MudTh>
+                                    <MudTh>Value</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>@context.Description</MudTd>
+                                    <MudTd>@context.Description</MudTd>
+                                    <MudTd>@context.Value.ToString("C")</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                        else
+                        {
+                            <MudText>No Collateral Information Available</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Secondary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public Loan Loan { get; set; }
+
+    private decimal CalculateTotalRepayableAmount()
+    {
+        return Loan.PrincipalAmount * (1 + (Loan.InterestRate?.Rate / 100 ?? 0));
+    }
+
+    private decimal CalculateRemainingBalance()
+    {
+        return Loan.PrincipalAmount - Loan.RepaymentAmount;
+    }
+
+    private Color GetRepaymentStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "fully paid" => Color.Success,
+            "partially paid" => Color.Warning,
+            "overdue" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetLoanPeriodDescription()
+    {
+        return Loan.PeriodType switch
+        {
+            Loan.LoanPeriodType.Weekly => "Weekly",
+            Loan.LoanPeriodType.BiWeekly => "Bi-Weekly",
+            Loan.LoanPeriodType.ThreeWeeks => "Three Weeks",
+            Loan.LoanPeriodType.FourWeeks => "Four Weeks",
+            Loan.LoanPeriodType.Monthly => "Monthly",
+            Loan.LoanPeriodType.Quarterly => "Quarterly",
+            Loan.LoanPeriodType.SemiAnnual => "Semi-Annual",
+            Loan.LoanPeriodType.Annual => "Annual",
+            _ => "Unknown"
+        };
+    }
+
+    private void Cancel()
+    {
+        //MudDialog.Cancel();
+    }
+}

@@ -17,6 +17,8 @@
         await LoanStatusService.AddAsync(newLoanstatus);
         await OnStatusadded.InvokeAsync();
         MudDialog.Close(DialogResult.Ok(true));
+
+        newLoanstatus = new LoanStatus(); 
     }
 }
 

@@ -1,0 +1,305 @@
+﻿@page "/repayments"
+@using CreditCare.App.Web.Pages.Components
+@using CreditCare.Domain
+@using CreditCare.Services
+@inject LoanService LoanService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject RepaymentService RepaymentService
+
+<div class="repayment-management-container">
+    <MudText Typo="Typo.h6" Class="mb-4">Loan Repayment Management</MudText>
+    <hr />
+
+    @* Updated Statistics Section *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.List" Color="Color.Info" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Total Loans</MudText>
+                            <MudText Typo="Typo.h6">@totalNumberOfLoans</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Success" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Amount Given</MudText>
+                            <MudText Typo="Typo.h6">@totalPrincipalAmountGiven.ToString("N")</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Primary" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Amount Repaid</MudText>
+                            <MudText Typo="Typo.h6">@totalAmount.ToString("C")</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Total Defaulted Loans</MudText>
+                            <MudText Typo="Typo.h6">@totalDefaultedLoans</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    @* Search and Filter Section *@
+    <MudGrid Class="mb-4" AlignItems="AlignItems.Center">
+        <MudItem xs="12" sm="6">
+            <MudTextField Margin="Margin.Dense" @bind-Value="searchTerm"
+                          Label="Search Loans"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnBlur="ApplyFilters"
+                          Immediate="true"
+                          FullWidth="true" />
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudSelect Margin="Margin.Dense" @bind-Value="selectedRepaymentStatus"
+                       Label="Repayment Status"
+                       Variant="Variant.Outlined"
+                       OnBlur="ApplyFilters"
+                       FullWidth="true">
+                <MudSelectItem Value="@("")">All Statuses</MudSelectItem>
+                <MudSelectItem Value="@("Settled")">Settled</MudSelectItem>
+                <MudSelectItem Value="@("Active")">Active Loans</MudSelectItem>
+                <MudSelectItem Value="@("Defaulted")">Defaulted</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       OnClick="ResetFilters">
+                Reset Filters
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+
+    @* Loan Repayment Table *@
+    <MudTable Items="@filteredLoans"
+              Hover="true"
+              Striped="true"
+              Dense="true"
+              Elevation="2"
+              Class="mt-4">
+        <HeaderContent>
+            <MudTh>Loan Number</MudTh>
+            <MudTh>Customer</MudTh>
+            <MudTh>Original Amount</MudTh>
+            <MudTh>Repaid Amount</MudTh>
+            <MudTh>Remaining Balance</MudTh>
+            <MudTh>Loan Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.LoanNumber</MudTd>
+            <MudTd>@context.Customer.FullName</MudTd>
+            <MudTd>@context.PrincipalAmount.ToString("N")</MudTd>
+            <MudTd>@CalculateRepaidAmount(context).ToString("N")</MudTd>
+            <MudTd>@CalculateRepaymentAmount(context).ToString("N")</MudTd>
+            <MudTd>
+                <MudChip Color="@GetRepaymentStatusColor(context.Status?.Name)"
+                         Size="Size.Small">
+                    @context.Status.Name
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                    <MudMenuItem OnClick="() => OpenRepaymentDetailsDialog(context)">
+                        View Repayment Details
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="() => ProcessPartialRepayment(context)"
+                                 Disabled="@(context.Status.Name == "Settled")">
+                        Process Partial Repayment
+                    </MudMenuItem>
+                </MudMenu>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</div>
+
+@code {
+    private List<Loan> loans = new List<Loan>();
+    private List<Repayment> repayments = new List<Repayment>();
+    private List<Loan> filteredLoans = new List<Loan>();
+
+    // Statistics Variables
+    private int totalNumberOfLoans;
+    private decimal totalPrincipalAmountGiven;
+    private decimal totalPrincipalAmountRepaid;
+    private int totalDefaultedLoans;
+
+    // Filtering Variables
+    private string searchTerm = "";
+    private string selectedRepaymentStatus = "";
+    private decimal totalAmount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadLoans();
+            await LoadRepayments(); // Add this method
+            CalculateStatistics();
+            await CalculateTotalRepaidAmount(); // Add this method
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error initializing page: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // New method to load repayments
+    private async Task LoadRepayments()
+    {
+        try
+        {
+            repayments = await RepaymentService.GetAllRepaymentsAsync(); // Add this method to RepaymentService
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading repayments: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // New method to calculate total repaid amount
+    private async Task CalculateTotalRepaidAmount()
+    {
+        totalAmount = await RepaymentService.CalculateTotalRepaymentAmountAsync();
+    }
+
+
+    private async Task LoadLoans()
+    {
+        try
+        {
+            loans = await LoanService.GetAllLoansAsync();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading loans: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        filteredLoans = loans.Where(loan =>
+            (string.IsNullOrWhiteSpace(searchTerm) ||
+             loan.LoanNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             loan.Customer.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(selectedRepaymentStatus) ||
+             loan.Status.Name == selectedRepaymentStatus)
+        ).ToList();
+    }
+
+    private void ResetFilters()
+    {
+        searchTerm = "";
+        selectedRepaymentStatus = "";
+        ApplyFilters();
+    }
+
+    private void CalculateStatistics()
+    {
+        totalNumberOfLoans = loans.Count;
+        totalPrincipalAmountGiven = loans.Sum(l => l.PrincipalAmount);
+        totalPrincipalAmountRepaid = repayments.Sum(r => r.Amount); // lets fix this if it doesnt work
+        totalDefaultedLoans = loans.Count(l => l.Status.Name == "Defaulted");
+    }
+
+    private decimal CalculateRepaidAmount(Loan loan)
+    {
+        // Ensure that loan.Repayments is a collection of repayment records associated with the loan
+        return loan.Repayments?.Sum(r => r.Amount) ?? 0m;
+    }
+
+    private decimal CalculateRemainingBalance(Loan loan)
+    {
+        decimal totalRepaid = CalculateRepaidAmount(loan);
+        return loan.PrincipalAmount - totalRepaid;
+    }
+
+    private Color GetRepaymentStatusColor(string status)
+    {
+        return status switch
+        {
+            "Settled" => Color.Success,
+            "Active Loans" => Color.Info,
+            "Defaulted" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private void OpenRepaymentDetailsDialog(Loan loan)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Loan", loan }
+        };
+
+        DialogService.Show<Repayment_Details_Dialog>("Repayment Details", parameters);
+    }
+
+    private decimal CalculateRepaymentAmount(Loan loan)
+    {
+        return loan.PrincipalAmount * (1 + (loan.InterestRate?.Rate / 100 ?? 0));
+    }
+
+    private async Task ProcessPartialRepayment(Loan loan)
+    {
+        try
+        {
+            var parameters = new DialogParameters
+        {
+            { "Loan", loan }
+        };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+            var dialog = DialogService.Show<PartialRepaymentDialog>("Process Partial Repayment", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result.Cancelled)
+            {
+                await LoadLoans();
+                Snackbar.Add("Partial repayment processed successfully.", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error processing partial repayment: {ex.Message}", Severity.Error);
+        }
+    }
+
+}
