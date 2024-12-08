@@ -1,1 +1,52 @@
-﻿
+﻿@using CreditCare.Domain
+@inject InterestRateService InterestRateService
+@inject IDialogService DialogService
+
+<EditForm Model="@InterestRate" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="InterestRate.Rate"
+                                  Label="Rate (%)"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  RequiredError="Rate is required" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="InterestRate.Term"
+                                  Label="Term"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  RequiredError="Term is required" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="InterestRate.Description"
+                                  Label="Description"
+                                  Variant="Variant.Outlined"
+                                  Required="false" />
+                </MudItem>
+            </MudGrid>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Save" Color="Color.Primary">Save</MudButton>
+            <MudButton OnClick="Cancel" Color="Color.Secondary">Cancel</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+@code {
+    [Parameter] public InterestRate InterestRate { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private async Task Save()
+    {
+        await InterestRateService.UpdateAsync(InterestRate);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+}

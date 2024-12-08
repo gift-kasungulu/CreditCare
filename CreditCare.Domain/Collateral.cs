@@ -14,7 +14,7 @@ namespace CreditCare.Domain
         public int CollateralStatusId {  set; get; } //Fkey
         public CollateralStatus? collateralStatus { get; set; }  //Nav prop
         public int LoanId { get; set; }
-        public Loan Loan { get; set; } = new Loan();
+        public Loan? Loan { get; set; }
     }
 
 }

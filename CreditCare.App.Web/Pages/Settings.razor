@@ -1,169 +1,130 @@
 ﻿@page "/settings"
+@using CreditCare.App.Web.Pages.Components
+@using CreditCare.Domain
 @inject CollateralStatusService CollateralStatusService
+@inject LoanStatusService LoanStatusService
+@inject InterestRateService InterestRateService
+@inject IDialogService DialogService
 
-  <PageTitle>Settings</PageTitle>
+<MudText Typo="Typo.h6"> Settings</MudText>
+<hr />
+<MudGrid Spacing="2">
+    <!-- Loan Status Section -->
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="2" Class="p-4">
+            <MudTypography Variant="h5" GutterBottom>Loan Status Management</MudTypography>
+            <MudDivider Class="mb-2" />
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenAddLoanStatus" Variant="Variant.Filled" Class="mb-4">
+                Add Loan Status
+            </MudButton>
+            <MudTable Items="@loanStatuses" Hover="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Status Name</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Name</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditLoanStatus(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteLoanStatus(context)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
 
-  @using CreditCare.App.Web.Pages.Components
-  @using CreditCare.Domain
-  @inject LoanStatusService LoanStatusService
-  @inject InterestRateService InterestRateService
-  @inject IDialogService DialogService
+    <!-- Interest Rate Section -->
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="2" Class="p-4">
+            <MudTypography Variant="h5" GutterBottom>Interest Rate Configuration</MudTypography>
+            <MudDivider Class="mb-2" />
+            <EditForm Model="@newInterestRate" OnValidSubmit="AddInterestRate">
+                <MudGrid Spacing="2" Class="mb-4">
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="newInterestRate.Rate" Label="Rate (%)" Variant="Variant.Outlined" Type="number" Required="true" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="newInterestRate.Term" Label="Term" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="!IsFormValid" Margin="Margin.Dense">
+                            Add Rate
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+                <MudTextField @bind-Value="newInterestRate.Description" Label="Description" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+            </EditForm>
+            <MudDivider Class="my-4" />
+            <MudTable Items="@interestRates" Hover="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Rate (%)</MudTh>
+                    <MudTh>Term</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Rate</MudTd>
+                    <MudTd>@context.Term</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditInterestRate(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteInterestRate(context.InterestRateId)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
 
-<div class="fade-in">
-    <!-- Page Header -->
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
-        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Large" />
-        <MudText Typo="Typo.h5">System Settings</MudText>
-    </MudStack>
-    <MudDivider Class="mb-4" />
+    <!-- Collateral Status Section -->
+    <MudItem xs="12">
+        <MudPaper Elevation="2" Class="p-4">
+            <MudTypography Variant="h5" GutterBottom>Collateral Status Management</MudTypography>
+            <MudDivider Class="mb-2" />
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenAddCollateralStatus" Variant="Variant.Filled" Class="mb-4">
+                Add Collateral Status
+            </MudButton>
+            <MudTable Items="@collateralStatuses" Hover="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Status Name</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Name</MudTd>
+                    <MudTd>
+                        <MudStack Row="true" Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditCollateralStatus(context)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteCollateralStatus(context)" />
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
-    <!-- Settings Sections -->
-    <MudGrid Spacing="3">
-
-        <!-- Loan Status Management -->
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-3">Loan Status Management</MudText>
-                <MudStack Row="true" Spacing="2" Class="mb-3">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OpenAddLoanStatus">
-                        Add New Status
-                    </MudButton>
-                </MudStack>
-                <MudTable Items="filterstatus" Hover="true" Dense="true">
-                    <HeaderContent>
-                        <MudTh>ID</MudTh>
-                        <MudTh>Status Name</MudTh>
-                        <MudTh>Actions</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>@context.LoanStatusId</MudTd>
-                        <MudTd>@context.Name</MudTd>
-                        <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Color="Color.Error" Size="Size.Small"
-                                           OnClick="() => DeleteLoanStatus(context)" />
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            </MudPaper>
-        </MudItem>
-
-        <!-- Interest Rate Management -->
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-3">Interest Rate Management</MudText>
-                <EditForm Model="@newInterestRate" OnValidSubmit="AddInterestRate">
-                    <MudGrid Spacing="2">
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="newInterestRate.Rate"
-                                          Label="Rate (%)"
-                                          Variant="Variant.Outlined" Required="true"
-                                          Type="number" />
-                        </MudItem>
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="newInterestRate.Description"
-                                          Label="Description"
-                                          Variant="Variant.Outlined" Required="true" />
-                        </MudItem>
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="newInterestRate.Term"
-                                          Label="Term"
-                                          Variant="Variant.Outlined" Required="true" />
-                        </MudItem>
-                        <MudItem xs="12" md="4">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                       ButtonType="ButtonType.Submit" Disabled="!IsFormValid">
-                                Save
-                            </MudButton>
-                        </MudItem>
-                    </MudGrid>
-                </EditForm>
-                <MudDivider Class="my-4" />
-                <MudTable Items="interestRates" Hover="true" Dense="true">
-                    <HeaderContent>
-                        <MudTh>Rate (%)</MudTh>
-                        <MudTh>Description</MudTh>
-                        <MudTh>Term</MudTh>
-                        <MudTh>Actions</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>@context.Rate</MudTd>
-                        <MudTd>@context.Description</MudTd>
-                        <MudTd>@context.Term</MudTd>
-                        <MudTd>
-                            <MudStack Row="true" Spacing="1">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Color="Color.Primary" Size="Size.Small"
-                                               OnClick="() => EditInterestRate(context)" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Color="Color.Error" Size="Size.Small"
-                                               OnClick="() => DeleteInterestRate(context.InterestRateId)" />
-                            </MudStack>
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            </MudPaper>
-        </MudItem>
-
-        <!-- Collateral Status Management -->
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-3">Collateral Status Management</MudText>
-                <MudStack Row="true" Spacing="2" Class="mb-3">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               OnClick="OpenAddCollateralStatus">
-                        Add New Collateral Status
-                    </MudButton>
-                </MudStack>
-                <MudTable Items="collateralStatuses" Hover="true" Dense="true">
-                    <HeaderContent>
-                        <MudTh>ID</MudTh>
-                        <MudTh>Status Name</MudTh>
-                        <MudTh>Actions</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>@context.CollateralStatusId</MudTd>
-                        <MudTd>@context.Name</MudTd>
-                        <MudTd>
-                            <MudStack Row="true" Spacing="1">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Color="Color.Primary" Size="Size.Small"
-                                               OnClick="() => EditCollateralStatus(context)" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Color="Color.Error" Size="Size.Small"
-                                               OnClick="() => DeleteCollateralStatus(context)" />
-                            </MudStack>
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-</div>
-
+<style>
+    .settings-container {
+        margin: 16px;
+    }
+</style>
 
 @code {
     private List<LoanStatus> loanStatuses = new List<LoanStatus>();
-    private List<LoanStatus> filterstatus = new List<LoanStatus>();
-    private string searchQuery = string.Empty;
     private List<CollateralStatus> collateralStatuses = new List<CollateralStatus>();
-
     private InterestRate newInterestRate = new InterestRate();
     private List<InterestRate> interestRates = new List<InterestRate>();
 
     private bool IsFormValid => newInterestRate.Rate > 0 &&
-                                 !string.IsNullOrWhiteSpace(newInterestRate.Description) &&
                                  !string.IsNullOrWhiteSpace(newInterestRate.Term);
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
         loanStatuses = await LoanStatusService.GetAllAsync();
         interestRates = await InterestRateService.GetAllAsync();
         collateralStatuses = await CollateralStatusService.GetAllAsync();
-        filterstatus = loanStatuses;
     }
 
     private async Task OpenAddCollateralStatus()
@@ -178,6 +139,42 @@
             collateralStatuses = await CollateralStatusService.GetAllAsync();
         }
     }
+
+    private async Task EditInterestRate(InterestRate interestRate)
+    {
+        var parameters = new DialogParameters
+            {
+                ["InterestRate"] = interestRate
+            };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialog = DialogService.Show<EditInterestRateDialog>("Edit Interest Rate", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            await LoadData(); // reload the interest rates
+        }
+    }
+
+
+    private async Task EditLoanStatus(LoanStatus loanStatus)
+    {
+        var parameters = new DialogParameters
+            {
+                ["LoanStatus"] = loanStatus
+            };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialog = DialogService.Show<EditLoanStatusDialog>("Edit Loan Status", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            await LoadData(); // reload the loan statuses
+        }
+    }
+
 
     private async Task EditCollateralStatus(CollateralStatus collateralStatus)
     {
@@ -198,20 +195,17 @@
 
     private async Task DeleteCollateralStatus(CollateralStatus collateralStatus)
     {
-        var confirm = await DialogService.ShowMessageBox(
-            "Confirm Delete",
-            "Are you sure you want to delete this collateral status?",
-            yesText: "Yes",
-            cancelText: "No"
-        );
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Confirm Deletion",
+            $"Are you sure you want to delete the collateral status '{collateralStatus.Name}'?",
+            yesText: "Delete", cancelText: "Cancel");
 
         if (confirm == true)
         {
             await CollateralStatusService.DeleteAsync(collateralStatus.CollateralStatusId);
-            collateralStatuses = await CollateralStatusService.GetAllAsync();
+            await LoadData();
         }
     }
-
 
     private async Task OpenAddLoanStatus()
     {
@@ -226,14 +220,19 @@
         }
     }
 
-    private async Task DeleteLoanStatus(LoanStatus loanstatus)
+   
+
+    private async Task DeleteLoanStatus(LoanStatus loanStatus)
     {
-        var confirm = await DialogService.ShowMessageBox("Confirm Delete", "Are you sure you want to delete this loan status?", yesText: "Yes", cancelText: "No");
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Confirm Deletion",
+            $"Are you sure you want to delete the loan status '{loanStatus.Name}'?",
+            yesText: "Delete", cancelText: "Cancel");
 
         if (confirm == true)
         {
-            await LoanStatusService.DeleteAsync(loanstatus.LoanStatusId);
-            loanStatuses = await LoanStatusService.GetAllAsync();
+            await LoanStatusService.DeleteAsync(loanStatus.LoanStatusId);
+            await LoadData();
         }
     }
 
@@ -242,31 +241,22 @@
         if (IsFormValid)
         {
             await InterestRateService.AddAsync(newInterestRate);
-            interestRates = await InterestRateService.GetAllAsync();
             newInterestRate = new InterestRate();
+            await LoadData();
         }
-    }
-
-    private async Task EditInterestRate(InterestRate interestRate)
-    {
-        var parameters = new DialogParameters
-            {
-                ["Rate"] = interestRate.Rate,
-                ["Description"] = interestRate.Description,
-                ["Term"] = interestRate.Term
-            };
-
-        
     }
 
     private async Task DeleteInterestRate(int interestRateId)
     {
-        var confirm = await DialogService.ShowMessageBox("Confirm Delete", "Are you sure you want to delete this interest rate?", yesText: "Yes", cancelText: "No");
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Confirm Deletion",
+            "Are you sure you want to delete this interest rate?",
+            yesText: "Delete", cancelText: "Cancel");
 
         if (confirm == true)
         {
             await InterestRateService.DeleteAsync(interestRateId);
-            interestRates = await InterestRateService.GetAllAsync();
+            await LoadData();
         }
     }
 }

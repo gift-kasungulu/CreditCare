@@ -38,7 +38,7 @@ builder.Services.AddScoped<CollateralStatusService>();
 builder.Services.AddScoped<LoanProductService>();
 builder.Services.AddScoped<LoanProductService>();
 builder.Services.AddScoped<RepaymentService>();
-builder.Services.AddScoped<ICollateralService, CollateralService>();   ///LOL
+builder.Services.AddScoped<CollateralService>();   
 
 
 

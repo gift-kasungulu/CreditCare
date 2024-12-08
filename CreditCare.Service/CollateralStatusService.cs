@@ -1,53 +1,78 @@
 ﻿using CreditCare.Domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace CreditCare.Service
 {
     public class CollateralStatusService : ICollateralStatusService
     {
-        private readonly List<CollateralStatus> _collateralStatuses = new List<CollateralStatus>();
+        private readonly ApplicationDbContext _context;
 
-        public Task<List<CollateralStatus>> GetAllAsync()
+        public CollateralStatusService(ApplicationDbContext context)
         {
-            return Task.FromResult(_collateralStatuses);
+            _context = context;
         }
 
-        public Task<CollateralStatus> GetByIdAsync(int id)
+        public async Task<List<CollateralStatus>> GetAllAsync()
         {
-            var collateralStatus = _collateralStatuses.FirstOrDefault(s => s.CollateralStatusId == id);
-            return Task.FromResult(collateralStatus);
+            return await _context.CollateralStatus
+                .AsNoTracking()
+                .ToListAsync();
         }
 
-        public Task AddAsync(CollateralStatus collateralStatus)
+        public async Task<CollateralStatus> GetByIdAsync(int id)
         {
-            collateralStatus.CollateralStatusId = _collateralStatuses.Count + 1; // Simulate auto-increment ID
-            _collateralStatuses.Add(collateralStatus);
-            return Task.CompletedTask;
+            return await _context.CollateralStatus
+                .FirstOrDefaultAsync(s => s.CollateralStatusId == id);
         }
 
-        public Task UpdateAsync(CollateralStatus collateralStatus)
+        public async Task AddAsync(CollateralStatus collateralStatus)
         {
-            var existing = _collateralStatuses.FirstOrDefault(s => s.CollateralStatusId == collateralStatus.CollateralStatusId);
-            if (existing != null)
+            // Ensure no existing status with the same name
+            var existingStatus = await _context.CollateralStatus
+                .FirstOrDefaultAsync(s => s.Name.ToLower() == collateralStatus.Name.ToLower());
+
+            if (existingStatus != null)
             {
-                existing.Name = collateralStatus.Name;
+                throw new InvalidOperationException("A collateral status with this name already exists.");
             }
-            return Task.CompletedTask;
+
+            _context.CollateralStatus.Add(collateralStatus);
+            await _context.SaveChangesAsync();
         }
 
-        public Task DeleteAsync(int id)
+        public async Task UpdateAsync(CollateralStatus collateralStatus)
         {
-            var collateralStatus = _collateralStatuses.FirstOrDefault(s => s.CollateralStatusId == id);
-            if (collateralStatus != null)
+            var existing = await _context.CollateralStatus
+                .FirstOrDefaultAsync(s => s.CollateralStatusId == collateralStatus.CollateralStatusId);
+
+            if (existing == null)
             {
-                _collateralStatuses.Remove(collateralStatus);
+                throw new NotFoundException("Collateral status not found.");
             }
-            return Task.CompletedTask;
+
+            existing.Name = collateralStatus.Name;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var collateralStatus = await _context.CollateralStatus
+                .FirstOrDefaultAsync(s => s.CollateralStatusId == id);
+
+            if (collateralStatus == null)
+            {
+                throw new NotFoundException("Collateral status not found.");
+            }
+
+            _context.CollateralStatus.Remove(collateralStatus);
+            await _context.SaveChangesAsync();
         }
     }
-}
 
+    // Custom exception for not found scenarios
+    public class NotFoundException : Exception
+    {
+        public NotFoundException(string message) : base(message) { }
+    }
+}

@@ -11,7 +11,7 @@ namespace CreditCare.Service
     {
         Task<IEnumerable<Collateral>> GetAllCollateralsAsync();
         Task<Collateral?> GetCollateralByIdAsync(int collateralId);
-        Task AddCollateralAsync(Collateral collateral);
+        Task<Collateral> AddCollateralAsync(Collateral collateral); // Modified return type
         Task UpdateCollateralAsync(Collateral collateral);
         Task DeleteCollateralAsync(int collateralId);
     }

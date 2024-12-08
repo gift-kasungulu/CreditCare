@@ -22,10 +22,22 @@ namespace CreditCare.Domain
         public virtual DbSet<LoanProduct> LoanProducts { get; set; }
         public virtual DbSet<Repayment> Repayments { get; set; }
 
-        
-        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Collateral>()
+                .HasOne(c => c.Loan)
+                .WithMany(l => l.Collaterals) // Reference the navigation property in Loan
+                .HasForeignKey(c => c.LoanId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Collateral>()
+                .HasOne(c => c.collateralStatus)
+                .WithMany()
+                .HasForeignKey(c => c.CollateralStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
 
     }
 }

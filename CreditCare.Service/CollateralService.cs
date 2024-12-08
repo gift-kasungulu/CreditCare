@@ -33,10 +33,63 @@ namespace CreditCare.Service
                 .FirstOrDefaultAsync(c => c.CollateralId == collateralId);
         }
 
-        public async Task AddCollateralAsync(Collateral collateral)
+        public async Task<Collateral> AddCollateralAsync(Collateral collateral)
         {
-            _context.Collaterals.Add(collateral);
-            await _context.SaveChangesAsync();
+            try
+            {
+                // Validate input
+                if (collateral == null)
+                    throw new ArgumentNullException(nameof(collateral), "Collateral cannot be null");
+
+                // Ensure required fields are not null or default
+                if (string.IsNullOrWhiteSpace(collateral.Description))
+                    throw new ArgumentException("Description is required");
+
+                if (collateral.Value <= 0)
+                    throw new ArgumentException("Collateral value must be greater than zero");
+
+                if (collateral.LoanId <= 0)
+                    throw new ArgumentException("Invalid Loan ID");
+
+                if (collateral.CollateralStatusId <= 0)
+                    throw new ArgumentException("Invalid Collateral Status ID");
+
+                // Explicitly load and validate related entities
+                var loan = await _context.Loans
+                    .FirstOrDefaultAsync(l => l.LoanId == collateral.LoanId);
+                if (loan == null)
+                    throw new ArgumentException($"Loan with ID {collateral.LoanId} not found");
+
+                var status = await _context.CollateralStatus
+                    .FirstOrDefaultAsync(s => s.CollateralStatusId == collateral.CollateralStatusId);
+                if (status == null)
+                    throw new ArgumentException($"Collateral Status with ID {collateral.CollateralStatusId} not found");
+
+                // Attach related entities
+                collateral.Loan = loan;
+                collateral.collateralStatus = status;
+
+                // Add and save
+                _context.Collaterals.Add(collateral);
+                await _context.SaveChangesAsync();
+
+                return collateral;
+            }
+            catch (DbUpdateException ex)
+            {
+                // Log the detailed inner exception
+                // You might want to use a proper logging framework here
+                Console.WriteLine($"DbUpdateException: {ex.Message}");
+                Console.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+
+                throw new Exception("Failed to save collateral. Please check the data and try again.", ex);
+            }
+            catch (Exception ex)
+            {
+                // Log other exceptions
+                Console.WriteLine($"Exception in AddCollateralAsync: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task UpdateCollateralAsync(Collateral collateral)

@@ -5,27 +5,27 @@
 @inject LoanService LoanService
 @inject IDialogService DialogService
 
-<EditForm Model="@NewCollateral" OnValidSubmit="HandleSubmit">
+<EditForm Model="@ExistingCollateral" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />
     <MudDialog>
         <DialogContent>
             <MudGrid>
                 <MudItem xs="12">
-                    <MudTextField @bind-Value="NewCollateral.Description"
+                    <MudTextField @bind-Value="ExistingCollateral.Description"
                                   Label="Description"
                                   Variant="Variant.Outlined"
                                   Required="true"
                                   RequiredError="Description is required" />
                 </MudItem>
                 <MudItem xs="12">
-                    <MudNumericField @bind-Value="NewCollateral.Value"
+                    <MudNumericField @bind-Value="ExistingCollateral.Value"
                                      Label="Collateral Value"
                                      Variant="Variant.Outlined"
                                      Required="true"
                                      Min="0" />
                 </MudItem>
                 <MudItem xs="12">
-                    <MudSelect @bind-Value="NewCollateral.CollateralStatusId"
+                    <MudSelect @bind-Value="ExistingCollateral.CollateralStatusId"
                                Label="Collateral Status"
                                Variant="Variant.Outlined"
                                Required="true">
@@ -36,13 +36,13 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudSelect @bind-Value="NewCollateral.LoanId"
+                    <MudSelect @bind-Value="ExistingCollateral.LoanId"
                                Label="Associated Loan"
                                Variant="Variant.Outlined"
                                Required="true">
                         @foreach (var loan in Loans)
                         {
-                            <MudSelectItem Value="@loan.LoanId">Loan Number @loan.LoanNumber</MudSelectItem>
+                            <MudSelectItem Value="@loan.LoanId">Loan #@loan.LoanId</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -53,15 +53,16 @@
             <MudButton Color="Color.Primary"
                        ButtonType="ButtonType.Submit"
                        Variant="Variant.Filled">
-                Add Collateral
+                Update Collateral
             </MudButton>
         </DialogActions>
     </MudDialog>
 </EditForm>
 
 @code {
-    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
-    private Collateral NewCollateral = new Collateral();
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public Collateral ExistingCollateral { get; set; }
+
     private List<CollateralStatus> CollateralStatuses = new List<CollateralStatus>();
     private List<Loan> Loans = new List<Loan>();
 
@@ -71,13 +72,6 @@
         {
             CollateralStatuses = await CollateralStatusService.GetAllAsync();
             Loans = await LoanService.GetAllLoansAsync();
-
-            // Ensure we have statuses and loans
-            if (!CollateralStatuses.Any())
-                throw new InvalidOperationException("No collateral statuses available");
-
-            if (!Loans.Any())
-                throw new InvalidOperationException("No loans available");
         }
         catch (Exception ex)
         {
@@ -87,47 +81,14 @@
 
     private async Task HandleSubmit()
     {
-        // Additional client-side validation
-        if (NewCollateral == null)
-        {
-            await DialogService.ShowMessageBox("Error", "Collateral cannot be null");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(NewCollateral.Description))
-        {
-            await DialogService.ShowMessageBox("Error", "Description is required");
-            return;
-        }
-
-        if (NewCollateral.Value <= 0)
-        {
-            await DialogService.ShowMessageBox("Error", "Collateral value must be greater than zero");
-            return;
-        }
-
-        if (NewCollateral.LoanId <= 0)
-        {
-            await DialogService.ShowMessageBox("Error", "Please select a valid loan");
-            return;
-        }
-
-        if (NewCollateral.CollateralStatusId <= 0)
-        {
-            await DialogService.ShowMessageBox("Error", "Please select a valid collateral status");
-            return;
-        }
-
         try
         {
-            var addedCollateral = await CollateralService.AddCollateralAsync(NewCollateral);
-            MudDialog.Close(DialogResult.Ok(addedCollateral));
+            await CollateralService.UpdateCollateralAsync(ExistingCollateral);
+            MudDialog.Close(DialogResult.Ok(ExistingCollateral));
         }
         catch (Exception ex)
         {
-            // Log the full exception details if possible
-            Console.WriteLine($"Full Exception: {ex}");
-            await DialogService.ShowMessageBox("Error", $"Failed to add collateral: {ex.Message}");
+            await DialogService.ShowMessageBox("Error", $"Failed to update collateral: {ex.Message}");
         }
     }
 

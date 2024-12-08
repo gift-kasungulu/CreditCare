@@ -32,15 +32,20 @@ namespace CreditCare.Service
 
         public async Task UpdateAsync(InterestRate interestRate)
         {
-            var existing = await _context.IRates.FirstOrDefaultAsync(r => r.InterestRateId == interestRate.InterestRateId);
-            if (existing != null)
+            var existing = await _context.IRates
+                .FirstOrDefaultAsync(i => i.InterestRateId == interestRate.InterestRateId);
+
+            if (existing == null)
             {
-                existing.Rate = interestRate.Rate;
-                existing.Description = interestRate.Description;
-                existing.Term = interestRate.Term;
-                await _context.SaveChangesAsync();
+                throw new NotFoundException("Interest rate not found.");
             }
+
+            existing.Rate = interestRate.Rate;
+            existing.Description = interestRate.Description;
+            existing.Term = interestRate.Term;
+            await _context.SaveChangesAsync();
         }
+
 
         public async Task DeleteAsync(int id)
         {

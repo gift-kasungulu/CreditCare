@@ -1,0 +1,46 @@
+﻿@using CreditCare.Domain
+@inherits MudComponentBase
+@inject LoanStatusService LoanStatusService
+@inject IDialogService DialogService
+
+<EditForm Model="@LoanStatus" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="LoanStatus.Name"
+                                  Label="Loan Status"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  RequiredError="Loan status is required" />
+                </MudItem>
+           
+            </MudGrid>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary"
+                       ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled">
+                Update Loan Status
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+@code {
+    [Parameter] public LoanStatus LoanStatus { get; set; }
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private async Task Save()
+    {
+        await LoanStatusService.UpdateAsync(LoanStatus);
+        MudDialog.Close(DialogResult.Ok(true)); // Pass DialogResult here
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel()); // Pass DialogResult here as well
+    }
+
+}

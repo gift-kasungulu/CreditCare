@@ -35,15 +35,21 @@ namespace CreditCare.Service
 
         }
 
-        public Task UpdateAsync(LoanStatus loanStatus)
+        public async Task UpdateAsync(LoanStatus loanStatus)
         {
-            var existing = _context.LoanStatuses.FirstOrDefault(s => s.LoanStatusId == loanStatus.LoanStatusId);
-            if (existing != null)
+            var existing = await _context.LoanStatuses
+                .FirstOrDefaultAsync(s => s.LoanStatusId == loanStatus.LoanStatusId);
+
+            if (existing == null)
             {
-                existing.Name = loanStatus.Name;
+                throw new NotFoundException("Loan status not found.");
             }
-            return Task.CompletedTask;
+
+            existing.Name = loanStatus.Name;
+            await _context.SaveChangesAsync();
         }
+
+
 
         public async Task DeleteAsync(int id)
         {
