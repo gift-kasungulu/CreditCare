@@ -8,7 +8,6 @@
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6">Loan Repayment Details</MudText>
                             <MudText Typo="Typo.body2">Loan Number: @Loan.LoanNumber</MudText>
                         </CardHeaderContent>
                     </MudCardHeader>
@@ -17,12 +16,12 @@
                             <MudItem xs="6">
                                 <MudText>Loan Amount: @Loan.PrincipalAmount.ToString("C")</MudText>
                                 <MudText>Interest Rate: @Loan.InterestRate.Rate.ToString("P2")</MudText>
-                                <MudText>Total Repayable: @CalculateTotalRepayableAmount().ToString("C")</MudText>
+                                <MudText>Total Repayable: @CalculateTotalRepayableAmount().ToString("N")</MudText>
                                 <MudText>Loan Period: @GetLoanPeriodDescription()</MudText>
                             </MudItem>
                             <MudItem xs="6">
-                                <MudText>Remaining Balance: @CalculateRemainingBalance().ToString("C")</MudText>
-                                <MudText>Repaid Amount: @Loan.RepaymentAmount.ToString("C")</MudText>
+                                <MudText>Remaining Balance: @CalculateRemainingBalance().ToString("N")</MudText>
+                                <MudText>Repaid Amount: @Loan.RepaymentAmount.ToString("N")</MudText>
                                 <MudText>
                                     Repayment Status:
                                     <MudChip Color="@GetRepaymentStatusColor(Loan.Status.Name)"
@@ -72,7 +71,7 @@
                                 <RowTemplate>
                                     <MudTd>@context.Description</MudTd>
                                     <MudTd>@context.Description</MudTd>
-                                    <MudTd>@context.Value.ToString("C")</MudTd>
+                                    <MudTd>@context.Value.ToString("N")</MudTd>
                                 </RowTemplate>
                             </MudTable>
                         }
@@ -93,6 +92,7 @@
 @code {
     [Parameter]
     public Loan Loan { get; set; }
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
 
     private decimal CalculateTotalRepayableAmount()
     {
@@ -108,9 +108,10 @@
     {
         return status?.ToLower() switch
         {
-            "fully paid" => Color.Success,
-            "partially paid" => Color.Warning,
-            "overdue" => Color.Error,
+            "Settled" => Color.Success,
+            "Active" => Color.Primary,
+            "Pending" => Color.Warning,
+            "Defaulted" => Color.Error,
             _ => Color.Default
         };
     }
@@ -133,6 +134,6 @@
 
     private void Cancel()
     {
-        //MudDialog.Cancel();
+        //MudDialog.Close();
     }
 }

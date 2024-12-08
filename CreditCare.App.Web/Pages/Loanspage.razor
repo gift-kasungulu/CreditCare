@@ -9,34 +9,60 @@
 <div class="fade-in">
   <MudText Typo="Typo.h5">Loans Management</MudText>
   <hr />
-    <div class="card-container">
-        <div class="card bg-info text-white mb-3">
-            <div class="card-body">
-                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Large" /> Total Loans</h5>
-                <h3 class="card-text">@totalLoans</h3>
-            </div>
-        </div>
-        <div class="card bg-primary text-white mb-3">
-            <div class="card-body">
-                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Large" /> Active Loans</h5>
-                <h3 class="card-text">@activeLoans</h3>
-            </div>
-        </div>
-        <div class="card bg-success text-white mb-3">
-            <div class="card-body">
-                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" /> Settled Loans</h5>
-                <h3 class="card-text">@settledLoans</h3>
-            </div>
-        </div>
-        <div class="card bg-danger text-white mb-3">
-            <div class="card-body">
-                <h5 class="card-title"><MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Large" /> Defaulted Loans</h5>
-                <h3 class="card-text">@defaultedLoans</h3>
-            </div>
-        </div>
-    </div>
-
-  <br/>
+    <MudGrid Class="mb-3">
+        <MudItem xs="12" md="3">
+            <MudCard>
+            <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.List" Color="Color.Info" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Total Loans</MudText>
+                        <MudText Typo="Typo.h6">@totalLoans</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Timer" Color="Color.Primary" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Active Loans</MudText>
+                            <MudText Typo="Typo.h6">@activeLoans</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Settled Loans</MudText>
+                            <MudText Typo="Typo.h6">@settledLoans</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Large" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.body2">Defaulted Loans</MudText>
+                            <MudText Typo="Typo.h6">@defaultedLoans</MudText>
+                        </div>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
   <MudGrid AlignItems="Center" Justify="Justify.SpaceBetween" GutterSize="GutterSize.Small">
     <!-- Title -->
