@@ -19,11 +19,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
 builder.Services.AddSingleton<WeatherForecastService>();
 
 // My custom service registration 
@@ -38,8 +39,9 @@ builder.Services.AddScoped<CollateralStatusService>();
 builder.Services.AddScoped<LoanProductService>();
 builder.Services.AddScoped<LoanProductService>();
 builder.Services.AddScoped<RepaymentService>();
-builder.Services.AddScoped<CollateralService>();   
-
+builder.Services.AddScoped<CollateralService>(); 
+builder.Services.AddScoped<StripeService>();
+//builder.Services.AddScoped<SubscriptionMiddleware>();
 
 
 // Ui service registration 
@@ -73,5 +75,9 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
+
+// Register your custom middleware
+app.UseMiddleware<SubscriptionMiddleware>();
+
 
 app.Run();

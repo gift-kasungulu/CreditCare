@@ -1,6 +1,29 @@
 ﻿@page "/"
+@using System.Security.Claims
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Index</PageTitle>
 <MudText Typo="Typo.h6">Home</MudText>
 <hr />
 
+@code{
+    private string userName;
+
+    protected override async Task OnInitializedAsync(){
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var isAuthenticated = user.Identity.IsAuthenticated;
+
+        if (isAuthenticated)
+        {
+            userName = user.FindFirst(c => c.Type == ClaimTypes.Name)?.Value;
+            
+        }
+        else
+        {
+            Nav.NavigateTo("/Identity/Account/Login", forceLoad: true);
+        }
+    }
+}

@@ -15,33 +15,61 @@
     }
 }
 
-<MudDialog>
+<MudDialog MaxWidth="MaxWidth.Medium" Class="animated-dialog">
     <DialogContent>
-        
-                <MudGrid>
-                    <MudItem xs="6">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Full Name</MudText>
-                        <MudText Typo="Typo.body1">@Customer.FullName</MudText>
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Email</MudText>
-                        <MudText Typo="Typo.body1">@Customer.Email</MudText>
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">NRC Number</MudText>
-                        <MudText Typo="Typo.body1">@Customer.NrcNumber</MudText>
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Phone Number</MudText>
-                        <MudText Typo="Typo.body1">@Customer.PhoneNumber</MudText>
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Address</MudText>
-                        <MudText Typo="Typo.body1">@Customer.Address</MudText>
-                    </MudItem>
-                </MudGrid>
-          
-                <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="CloseDialog">Close</MudButton>
-           
+        <MudPaper Elevation="2" Class="dialog-content">
+            <MudGrid Gutter="2">
+                <MudItem xs="6">
+                    <MudText Typo="Typo.h6" Color="Color.Primary">Full Name</MudText>
+                    <MudText Typo="Typo.body2">@Customer.FullName</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.h6" Color="Color.Primary">Email</MudText>
+                    <MudText Typo="Typo.body2">@Customer.Email</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.h6" Color="Color.Primary">NRC Number</MudText>
+                    <MudText Typo="Typo.body2">@Customer.NrcNumber</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.h6" Color="Color.Primary">Phone Number</MudText>
+                    <MudText Typo="Typo.body2">@Customer.PhoneNumber</MudText>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Color="Color.Primary">Address</MudText>
+                    <MudText Typo="Typo.body2">@Customer.Address</MudText>
+                </MudItem>
+            </MudGrid>
+            <MudDivider Class="my-2" />
+            <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="CloseDialog" StartIcon="@Icons.Material.Filled.Close">
+                Close
+            </MudButton>
+        </MudPaper>
     </DialogContent>
 </MudDialog>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const animatedDialogs = document.querySelectorAll('.animated-dialog');
+
+        animatedDialogs.forEach(dialog => {
+            dialog.style.opacity = "0";
+            dialog.style.transform = "translateY(20px)";
+            dialog.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+
+            setTimeout(() => {
+                dialog.style.opacity = "1";
+                dialog.style.transform = "translateY(0)";
+            }, 100);
+
+            dialog.addEventListener("click", event => {
+                if (event.target.matches(".mud-button")) {
+                    dialog.style.opacity = "0";
+                    dialog.style.transform = "translateY(20px)";
+                    setTimeout(() => dialog.close(), 300);
+                }
+            });
+        });
+    });
+
+</script>
