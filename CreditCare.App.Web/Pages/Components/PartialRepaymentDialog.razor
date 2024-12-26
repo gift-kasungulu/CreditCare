@@ -11,15 +11,17 @@
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
+                            <MudAlert Severity="Severity.Info">
+                                <MudText Typo="Typo.body2">Loan Number: @Loan.LoanNumber</MudText>
+                            </MudAlert>
                             
-                            <MudText Typo="Typo.body2">Loan Number: @Loan.LoanNumber</MudText>
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
                         <MudGrid>
                             <MudItem xs="6">
-                                <MudText>Total Loan Amount: @Loan.PrincipalAmount.ToString("C")</MudText>
-                                <MudText>Remaining Balance: @CalculateRemainingBalance().ToString("C")</MudText>
+                                <MudText>Total Loan Amount: @CalculateRepaymentAmount(Loan).ToString("N")</MudText>
+                                <MudText>Remaining Balance: @CalculateRemainingBalance().ToString("N")</MudText>
                             </MudItem>
                             <MudItem xs="6">
                                 <MudNumericField @bind-Value="repaymentAmount"
@@ -68,14 +70,14 @@
 
 @code {
     [CascadingParameter]
-    MudDialogInstance Dialog { get; set; }
+    MudDialogInstance? Dialog { get; set; }
 
     [Parameter]
-    public Loan Loan { get; set; }
+    public Loan? Loan { get; set; }
 
     private decimal repaymentAmount;
-    private string paymentMethod;
-    private string paymentReference;
+    private string? paymentMethod;
+    private string? paymentReference;
 
     // Calculate the remaining balance considering the interest and processing fee
     private decimal CalculateRemainingBalance()
@@ -85,6 +87,10 @@
         return totalRepaymentAmount - totalRepaid;
     }
 
+    private decimal CalculateRepaymentAmount(Loan loan)
+    {
+        return loan.PrincipalAmount * (1 + (loan.InterestRate?.Rate / 100 ?? 0)); // hope this will calculate the remaining balance
+    }
 
     private bool IsRepaymentValid()
     {

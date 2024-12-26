@@ -14,7 +14,7 @@
     @* Updated Statistics Section *@
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="3">
-            <MudCard>
+            <MudCard Style="background-color: antiquewhite"> 
                 <MudCardContent>
                     <div class="d-flex align-center">
                         <MudIcon Icon="@Icons.Material.Filled.List" Color="Color.Info" Size="Size.Large" Class="mr-3" />
@@ -27,7 +27,7 @@
             </MudCard>
         </MudItem>
         <MudItem xs="12" md="3">
-            <MudCard>
+            <MudCard Style="background-color: aqua">
                 <MudCardContent>
                     <div class="d-flex align-center">
                         <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Success" Size="Size.Large" Class="mr-3" />
@@ -40,20 +40,20 @@
             </MudCard>
         </MudItem>
         <MudItem xs="12" md="3">
-            <MudCard>
+            <MudCard Style="background-color: greenyellow">
                 <MudCardContent>
                     <div class="d-flex align-center">
                         <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Primary" Size="Size.Large" Class="mr-3" />
                         <div>
                             <MudText Typo="Typo.body2">Amount Repaid</MudText>
-                            <MudText Typo="Typo.h6">@totalAmount.ToString("C")</MudText>
+                            <MudText Typo="Typo.h6">@totalAmount.ToString("N")</MudText>
                         </div>
                     </div>
                 </MudCardContent>
             </MudCard>
         </MudItem>
         <MudItem xs="12" md="3">
-            <MudCard>
+            <MudCard Style="background-color: salmon">
                 <MudCardContent>
                     <div class="d-flex align-center">
                         <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Large" Class="mr-3" />
@@ -102,12 +102,12 @@
     </MudGrid>
 
     @* Loan Repayment Table *@
-    <MudTable Items="@filteredLoans"
+    <MudTable  Items="@filteredLoans"
               Hover="true"
               Striped="true"
               Dense="true"
               Elevation="2"
-              Class="mt-4">
+              Animated="true">
         <HeaderContent>
             <MudTh>Loan Number</MudTh>
             <MudTh>Customer</MudTh>
@@ -119,7 +119,7 @@
         </HeaderContent>
         <RowTemplate>
             <MudTd>@context.LoanNumber</MudTd>
-            <MudTd>@context.Customer.FullName</MudTd>
+            <MudTd>@context.Customer?.FullName</MudTd>
             <MudTd>@context.PrincipalAmount.ToString("N")</MudTd>
             <MudTd>@CalculateRepaidAmount(context).ToString("N")</MudTd>
             <MudTd>@CalculateRepaymentAmount(context).ToString("N")</MudTd>
@@ -198,7 +198,6 @@
         totalAmount = await RepaymentService.CalculateTotalRepaymentAmountAsync();
     }
 
-
     private async Task LoadLoans()
     {
         try
@@ -273,7 +272,7 @@
 
     private decimal CalculateRepaymentAmount(Loan loan)
     {
-        return loan.PrincipalAmount * (1 + (loan.InterestRate?.Rate / 100 ?? 0));
+        return loan.PrincipalAmount * (1 + (loan.InterestRate?.Rate / 100 ?? 0)) - CalculateRepaidAmount(loan); // hope this will calculate the remaining balance 
     }
 
     private async Task ProcessPartialRepayment(Loan loan)
@@ -287,7 +286,7 @@
 
             var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
 
-            var dialog = DialogService.Show<PartialRepaymentDialog>("Process Partial Repayment", parameters, options);
+            var dialog = DialogService.Show<PartialRepaymentDialog>("Process Repayment", parameters, options);
             var result = await dialog.Result;
 
             if (!result.Cancelled)

@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CreditCare.App.Web</title>
+    <title>@ViewData["Title"] - CreditCare</title>
 
     <environment include="Development">
         <link rel="stylesheet" href="~/Identity/lib/bootstrap/dist/css/bootstrap.css" />
@@ -20,12 +20,114 @@
               asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
         <link rel="stylesheet" href="~/Identity/css/site.css" asp-append-version="true" />
     </environment>
+
+    <!-- Add custom styles -->
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2563eb, #7c3aed, #db2777);
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            border: none !important;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+            .nav-link:hover {
+                color: white !important;
+            }
+
+        .main-container {
+            min-height: calc(100vh - 76px);
+            padding: 2rem 0;
+        }
+
+        .auth-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        
+
+        {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        }
+
+        .auth-form {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 2rem;
+            color: white;
+        }
+
+        .content-section {
+            color: white;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+            .form-control:focus, .form-select:focus {
+                background: rgba(255, 255, 255, 0.25);
+                border-color: rgba(255, 255, 255, 0.5);
+                color: white;
+                box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+            }
+
+            .form-control::placeholder {
+                color: rgba(255, 255, 255, 0.6);
+            }
+
+        .btn-primary {
+            background-color: white;
+            border-color: white;
+            color: #2563eb;
+        }
+
+            .btn-primary:hover {
+                background-color: rgba(255, 255, 255, 0.9);
+                border-color: rgba(255, 255, 255, 0.9);
+                color: #2563eb;
+            }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" href="~/">CreditCare.App.Web</a>
+                <a class="navbar-brand" href="~/">CreditCare</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -41,32 +143,19 @@
                     else
                     {
                         throw new InvalidOperationException("The default Identity UI layout requires a partial view '_LoginPartial' " +
-                            "usually located at '/Pages/_LoginPartial' or at '/Views/Shared/_LoginPartial' to work. Based on your configuration " +
-                            $"we have looked at it in the following locations: {System.Environment.NewLine}{string.Join(System.Environment.NewLine, result.SearchedLocations)}.");
+                        "usually located at '/Pages/_LoginPartial' or at '/Views/Shared/_LoginPartial' to work. Based on your configuration " +
+                        $"we have looked at it in the following locations: {System.Environment.NewLine}{string.Join(System.Environment.NewLine, result.SearchedLocations)}.");
                     }
                 </div>
             </div>
         </nav>
     </header>
 
-    <div class="container">
-        <partial name="_CookieConsentPartial" optional />
-        <main role="main" class="pb-1">
+    <div class="main-container">
+        <div class="auth-grid">
             @RenderBody()
-        </main>
-    </div>
-    <footer class="footer border-top pl-3 text-muted">
-        <div class="container">
-        &copy; 2024 - CreditCare.App.Web
-            @{
-                var foundPrivacy = Url.Page("/Privacy", new { area = "" });
-            }
-            @if (foundPrivacy != null)
-            {
-                <a asp-area="" asp-page="/Privacy">Privacy</a>
-            }
         </div>
-    </footer>
+    </div>
 
     <environment include="Development">
         <script src="~/Identity/lib/jquery/dist/jquery.js"></script>
@@ -89,6 +178,6 @@
         <script src="~/Identity/js/site.js" asp-append-version="true"></script>
     </environment>
 
-    @await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("Scripts", required: false)-''
 </body>
 </html>
